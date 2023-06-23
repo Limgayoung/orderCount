@@ -1,54 +1,41 @@
-# Miscellaneous
-*.java.hsp
-*.sonarj
-*.sw*
-.DS_Store
-build.sh
-integration-repo
-ivy-cache
-argfile*
-activemq-data/
-classes/
-
-# Log files
-jxl.log
-jmx.log
-derby.log
-
-# Gradle artifacts
+HELP.md
 .gradle
-.gradletasknamecache
-/build
-buildSrc/build
-/spring-*/build
-/framework-bom/build
-/framework-docs/build
-/integration-tests/build
-/src/asciidoc/build
-spring-test/test-output/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.DS_Store
 
-# Maven artifacts
-pom.xml
-/target/
-
-# Eclipse artifacts, including WTP generated manifests
-bin
+### STS ###
+.apt_generated
 .classpath
+.factorypath
 .project
 .settings
 .springBeans
-spring-*/src/main/java/META-INF/MANIFEST.MF
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
 
-# IDEA artifacts and output dirs
+### IntelliJ IDEA ###
+.idea
+*.iws
 *.iml
 *.ipr
-*.iws
-.idea
-out
-test-output
-atlassian-ide-plugin.xml
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
-# VS Code
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
 .vscode/
 
-cached-antora-playbook.yml
+# resources
+application.yml

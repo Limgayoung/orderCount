@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.debug.controller.exception.TestException;
+import nunu.orderCount.global.error.ErrorCode;
 import nunu.orderCount.global.response.Response;
 import nunu.orderCount.global.response.ResponseCode;
 import org.springframework.http.ResponseEntity;
@@ -23,34 +25,47 @@ public class TestController {
             @ApiResponse(responseCode = "200", description = "성공")
     })
     @GetMapping("/swagger")
-    public ResponseEntity<Response> swaggerTest(){
+    public ResponseEntity<Response> swaggerTest() {
         return Response.SUCCESS(ResponseCode.SUCCESS, "data");
     }
 
     @GetMapping("/response/success")
-    public ResponseEntity<Response> responseSuccessTest(){
+    public ResponseEntity<Response> responseSuccessTest() {
         log.info("test");
         return Response.SUCCESS(ResponseCode.SUCCESS, "data");
     }
+
     @GetMapping("/response/success/message")
-    public ResponseEntity<Response> responseSuccessMessageTest(){
+    public ResponseEntity<Response> responseSuccessMessageTest() {
         log.info("test");
         return Response.SUCCESS(ResponseCode.SUCCESS, "message", "data");
     }
+
     @GetMapping("/response/success/void")
-    public ResponseEntity<Response> responseSuccessVoidTest(){
+    public ResponseEntity<Response> responseSuccessVoidTest() {
         log.info("test");
         return Response.SUCCESS();
     }
+
     @GetMapping("/response/failure")
-    public ResponseEntity<Response> responseFailureVoidTest(){
+    public ResponseEntity<Response> responseFailureVoidTest() {
         log.info("test");
         return Response.FAILURE(ResponseCode.FAILURE);
     }
+
     @GetMapping("/response/failure/message")
-    public ResponseEntity<Response> responseFailureTest(){
+    public ResponseEntity<Response> responseFailureTest() {
         log.info("test");
         return Response.FAILURE(ResponseCode.FAILURE, "message");
     }
 
+    @GetMapping("/error")
+    public ResponseEntity<Response> errorTest(){
+        throw new TestException(ErrorCode.BAD_REQUEST);
+    }
+
+    @GetMapping("/error/message")
+    public ResponseEntity<Response> errorDetailMessageTest(){
+        throw new TestException(ErrorCode.BAD_REQUEST, "detailMessage");
+    }
 }

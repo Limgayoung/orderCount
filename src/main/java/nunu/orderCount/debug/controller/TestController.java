@@ -4,12 +4,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.global.response.Response;
+import nunu.orderCount.global.response.ResponseCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @Tag(name = "test api", description = "debug용 api 모음")
 @RestController
 @RequestMapping("/test")
@@ -20,7 +23,34 @@ public class TestController {
             @ApiResponse(responseCode = "200", description = "성공")
     })
     @GetMapping("/swagger")
-    public ResponseEntity<String> swaggerTest(){
-        return ResponseEntity.ok("ok");
+    public ResponseEntity<Response> swaggerTest(){
+        return Response.SUCCESS(ResponseCode.SUCCESS, "data");
     }
+
+    @GetMapping("/response/success")
+    public ResponseEntity<Response> responseSuccessTest(){
+        log.info("test");
+        return Response.SUCCESS(ResponseCode.SUCCESS, "data");
+    }
+    @GetMapping("/response/success/message")
+    public ResponseEntity<Response> responseSuccessMessageTest(){
+        log.info("test");
+        return Response.SUCCESS(ResponseCode.SUCCESS, "message", "data");
+    }
+    @GetMapping("/response/success/void")
+    public ResponseEntity<Response> responseSuccessVoidTest(){
+        log.info("test");
+        return Response.SUCCESS();
+    }
+    @GetMapping("/response/failure")
+    public ResponseEntity<Response> responseFailureVoidTest(){
+        log.info("test");
+        return Response.FAILURE(ResponseCode.FAILURE);
+    }
+    @GetMapping("/response/failure/message")
+    public ResponseEntity<Response> responseFailureTest(){
+        log.info("test");
+        return Response.FAILURE(ResponseCode.FAILURE, "message");
+    }
+
 }

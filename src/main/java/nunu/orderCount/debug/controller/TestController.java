@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.debug.controller.exception.TestException;
+import nunu.orderCount.debug.service.TestService;
 import nunu.orderCount.global.error.ErrorCode;
 import nunu.orderCount.global.response.Response;
 import nunu.orderCount.global.response.ResponseCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/test")
 @RequiredArgsConstructor
 public class TestController {
+    private final TestService testService;
 
     @Operation(summary = "swagger 작동 확인용 api", description = "swagger 작동을 확인합니다.", responses = {
             @ApiResponse(responseCode = "200", description = "성공")
@@ -60,12 +63,22 @@ public class TestController {
     }
 
     @GetMapping("/error")
-    public ResponseEntity<Response> errorTest(){
+    public ResponseEntity<Response> errorTest() {
         throw new TestException(ErrorCode.BAD_REQUEST);
     }
 
     @GetMapping("/error/message")
-    public ResponseEntity<Response> errorDetailMessageTest(){
+    public ResponseEntity<Response> errorDetailMessageTest() {
         throw new TestException(ErrorCode.BAD_REQUEST, "detailMessage");
+    }
+
+    @PostMapping("/base-entity")
+    public ResponseEntity<Response> baseEntityTest(){
+        return Response.SUCCESS(ResponseCode.SUCCESS, testService.saveEntity("entity name"));
+    }
+
+    @GetMapping("/base-entity")
+    public ResponseEntity<Response> getBaseEntityTest(){
+        return Response.SUCCESS(ResponseCode.SUCCESS, testService.getEntity(1L));
     }
 }

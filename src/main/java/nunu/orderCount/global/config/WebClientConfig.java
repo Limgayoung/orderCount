@@ -19,7 +19,7 @@ public class WebClientConfig {
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(5*1024*1024)) //5M 설정, 기본 256KB
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1*1024*1024)) //1M 설정, 기본 256KB
                 .defaultHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
                 .build();
     }

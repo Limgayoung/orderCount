@@ -50,6 +50,9 @@ dependencies {
 
 	//p6spy
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.1'
+
+	//json parser
+	implementation group: 'com.googlecode.json-simple', name:'json-simple', version:'1.1.1'
 }
 
 tasks.named('test') {

@@ -19,7 +19,8 @@ public enum ErrorCode {
     BAD_REQUEST(400, "C002", "잘못된 요청입니다."),
 
     //webclient
-    REQUEST_API_ERROR(500, "W001", "응답값을 받아올 수 없습니다.");
+    REQUEST_API_ERROR(500, "W001", "응답값을 받아올 수 없습니다."),
+    JSON_PARSING_ERROR(500, "W002", "json을 파싱할 수 없습니다");
 
     private final Integer status;
     private final String code;

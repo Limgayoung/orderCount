@@ -28,7 +28,7 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         this.ORDER_REQUEST_URI = orderRequestUri;
         this.query = query;
     }
-    
+
     public List<ResponseZigzagOrderDto> zigzagOrderListRequester(String cookie, Integer startDate, Integer endDate) {
         RequestZigzagOrderDto requestZigzagOrderDto = new RequestZigzagOrderDto(query, startDate, endDate);
         String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);

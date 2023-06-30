@@ -7,16 +7,16 @@ import java.util.List;
 @Getter
 public class RequestZigzagOrderDto {
     private final String query;
-    private final Variables variables;
+    private final OrderVariables variables;
 
     public RequestZigzagOrderDto(String query, Integer gte, Integer lte) {
         this.query = query;
-        this.variables = new Variables(gte, lte);
+        this.variables = new OrderVariables(gte, lte);
     }
 }
 
 @Getter
-class Variables {
+class OrderVariables {
     private final List<String> status_list;
     private final boolean only_late_shipment;
     private final boolean only_withdrawn_cancel_request;
@@ -26,7 +26,7 @@ class Variables {
     private final Integer date_marked_awaiting_shipment_ymd_gte;
     private final Integer date_marked_awaiting_shipment_ymd_lte;
 
-    public Variables(Integer date_marked_awaiting_shipment_ymd_gte, Integer date_marked_awaiting_shipment_ymd_lte) {
+    public OrderVariables(Integer date_marked_awaiting_shipment_ymd_gte, Integer date_marked_awaiting_shipment_ymd_lte) {
         this.status_list = Arrays.asList("AWAITING_SHIPMENT");
         this.only_late_shipment = false;
         this.only_withdrawn_cancel_request = false;

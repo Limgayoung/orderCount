@@ -12,6 +12,8 @@ import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @Tag(name = "crawler test api", description = "debug용 zigzag crawler api 모음")
 @RestController
@@ -38,5 +40,11 @@ public class RequesterTestController {
     public ResponseEntity<Response> productImageTest(@RequestParam("cookieString") String cookie,
                                                      @RequestParam("productId") String productId) {
         return Response.SUCCESS(ResponseCode.SUCCESS, zigzagProductService.ZigzagProductImageUrlRequester(cookie, productId));
+    }
+
+    @GetMapping("/product/images")
+    public ResponseEntity<Response> productImagesTest(@RequestParam("cookieString") String cookie,
+                                                     @RequestParam("productIdList") List<String> productIdList) {
+        return Response.SUCCESS(ResponseCode.SUCCESS, zigzagProductService.ZigzagProductImagesUrlRequester(cookie, productIdList));
     }
 }

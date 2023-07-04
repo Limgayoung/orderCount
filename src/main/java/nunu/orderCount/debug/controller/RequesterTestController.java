@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Slf4j
-@Tag(name = "crawler test api", description = "debug용 zigzag crawler api 모음")
+@Tag(name = "requester test api", description = "debug용 zigzag requester api 모음")
 @RestController
 @RequestMapping("/test/requester")
 @RequiredArgsConstructor

@@ -2,6 +2,7 @@ FROM openjdk:11-jdk
 
 WORKDIR /app
 
+#jar 복사
 COPY build/libs/*.jar /app/app.jar
 
 #컨테이너가 실행될 때 명령어 수행

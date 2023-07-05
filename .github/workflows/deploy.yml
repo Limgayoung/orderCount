@@ -43,8 +43,7 @@ jobs:
         mkdir -p ./src/main/resources
         cd ./src/main/resources
         touch ./application.yml        
-        echo "${{secrets.APPLICATION}}" > ./application.yml
-        cat application.yml
+        echo "${{secrets.APPLICATION}}" > ./application.yml        
       shell: bash
       
     ## gradle build

@@ -69,6 +69,7 @@ jobs:
         host: $HOST
         username: ec2-user
         key: $PRIVATE_KEYPAIR
+        port: 22
         timeout: 60s
         # docker
         script: |

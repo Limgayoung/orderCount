@@ -13,6 +13,7 @@ env:
   DOCKER_REPO: ${{secrets.DOCKER_REPO}}  
   HOST: ${{secrets.HOST}}  
   PRIVATE_KEYPAIR: ${{secrets.PRIVATE_KEYPAIR}}
+  APPLICATION: ${{secrets.APPLICATION}}
   
 jobs:
   CD:
@@ -39,12 +40,12 @@ jobs:
     
     ## create application.yml
     - name: Make Application.yml
+      shell: bash
       run: |        
         mkdir -p ./src/main/resources
         cd ./src/main/resources
         touch ./application.yml        
-        echo "${{secrets.APPLICATION}}" > ./application.yml        
-      shell: bash
+        echo $APPLICATION > ./application.yml              
       
     ## gradle build
     - name: Build

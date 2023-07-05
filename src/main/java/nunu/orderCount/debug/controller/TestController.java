@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
     private final TestService testService;
 
+    //cd test
     @Operation(summary = "swagger 작동 확인용 api", description = "swagger 작동을 확인합니다.", responses = {
             @ApiResponse(responseCode = "200", description = "성공")
     })
@@ -31,7 +32,7 @@ public class TestController {
     public ResponseEntity<Response> swaggerTest() {
         return Response.SUCCESS(ResponseCode.SUCCESS, "data");
     }
-    
+
     @GetMapping("/response/success")
     public ResponseEntity<Response> responseSuccessTest() {
         log.info("test");

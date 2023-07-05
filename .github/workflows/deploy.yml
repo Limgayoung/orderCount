@@ -43,7 +43,7 @@ jobs:
         mkdir -p ./src/main/resources
         cd ./src/main/resources
         touch ./application.yml        
-        echo $APPLICATION > ./application.yml              
+        echo $APPLICATION | base64 --decode > ./application.yml              
       
     ## gradle build
     - name: Build

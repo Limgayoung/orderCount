@@ -57,8 +57,8 @@ jobs:
     - name: Docker build & push
       run: |        
         docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-        docker build -tag $DOCKER_USERNAME/$REPO:${GITHUB_SHA::7} .
-        docker build -tag $DOCKER_USERNAME/$REPO:latest .        
+        docker build --tag $DOCKER_USERNAME/$REPO:${GITHUB_SHA::7} .
+        docker build --tag $DOCKER_USERNAME/$REPO:latest .        
         docker push $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7}
         docker push $DOCKER_USERNAME/$DOCKER_REPO:latest
       

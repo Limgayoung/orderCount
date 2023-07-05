@@ -66,10 +66,9 @@ jobs:
     - name: EC2 connect & docker
       uses: appleboy/ssh-action@master
       with:        
-        host: $HOST
+        host: ${{secrets.HOST}}
         username: ec2-user
-        key: $PRIVATE_KEYPAIR
-        port: 22
+        key: ${{secrets.PRIVATE_KEYPAIR        }}
         timeout: 60s
         # docker
         script: |

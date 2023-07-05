@@ -33,6 +33,7 @@ public class TestController {
     }
 
     //ci 확인 확인~
+    //ci 확인~
     @GetMapping("/response/success")
     public ResponseEntity<Response> responseSuccessTest() {
         log.info("test");

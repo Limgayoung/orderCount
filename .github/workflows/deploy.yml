@@ -10,9 +10,7 @@ permissions:
 env:
   DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-  DOCKER_REPO: ${{secrets.DOCKER_REPO}}  
-  HOST: ${{secrets.HOST}}  
-  PRIVATE_KEYPAIR: ${{secrets.PRIVATE_KEYPAIR}}
+  DOCKER_REPO: ${{secrets.DOCKER_REPO}}    
   APPLICATION: ${{secrets.APPLICATION}}
   
 jobs:
@@ -66,13 +64,13 @@ jobs:
     - name: EC2 connect & docker
       uses: appleboy/ssh-action@master
       with:        
-        host: ${{secrets.HOST}}
+        host: ${{ secrets.HOST }}
         username: ec2-user
-        key: ${{secrets.PRIVATE_KEYPAIR        }}
+        key: ${{ secrets.PRIVATE_KEYPAIR }}
         timeout: 60s
         # docker
         script: |
-          docker pull $DOCKER_USERNAME/@DOCKER_REPO:${GITHUB_SHA::7}
+          docker pull $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7}
           docker stop $REPO
           docker tag $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7} $REPO
           docker run -d --name $REPO -p 8080:8080

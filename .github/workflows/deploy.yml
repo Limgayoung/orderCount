@@ -39,11 +39,10 @@ jobs:
     
     ## create application.yml
     - name: Make Application.yml
-      run: |
+      run: |        
         mkdir -p ./src/main/resources
-        cd ./src/main/resources
-        touch ./application.yml
-        echo "${{secrets.APPLICATION}}" > ./application.yml
+        touch ./src/main/resources/application.yml        
+        echo "${{secrets.APPLICATION}}" > ./src/main/resources/application.yml
       shell: bash
       
     ## gradle build

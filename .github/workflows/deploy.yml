@@ -10,11 +10,8 @@ permissions:
 env:
   DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-  DOCKER_REPO: ${{secrets.DOCKER_REPO}}
-  AWS_ACCESS_KEY: ${{secrets.AWS_ACCESS_KEY}}
-  AWS_SECRET_KEY: ${{secrets.AWS_SECRET_KEY}}
-  HOST: ${{secrets.HOST}}
-  EC2_PASSWORD: ${{secrets.EC2_PASSWORD}}
+  DOCKER_REPO: ${{secrets.DOCKER_REPO}}  
+  HOST: ${{secrets.HOST}}  
   PRIVATE_KEYPAIR: ${{secrets.PRIVATE_KEYPAIR}}
   
 jobs:

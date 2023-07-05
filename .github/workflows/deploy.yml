@@ -73,7 +73,7 @@ jobs:
         # docker      
         script: |          
           docker pull $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7}
-          docker stop $$DOCKER_REPO
+          docker stop $DOCKER_REPO
           docker tag $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7} $DOCKER_USERNAME/$DOCKER_REPO
           docker run -d --name $DOCKER_REPO -p 8080:8080 $DOCKER_USERNAME/$DOCKER_REPO
           docker system prune -a

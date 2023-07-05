@@ -69,7 +69,7 @@ jobs:
         key: ${{ secrets.PRIVATE_KEYPAIR }}
         timeout: 60s
         # ssh로 실행시킨 쉘에서 환경변수 불러오지 못함.
-        env: DOCKER_USERNAME, DOCKER_REPO, GITHUB_SHA                
+        envs: DOCKER_USERNAME, DOCKER_REPO, GITHUB_SHA                
         # docker      
         script: |
           docker pull $DOCKER_USERNAME/$DOCKER_REPO:${GITHUB_SHA::7}

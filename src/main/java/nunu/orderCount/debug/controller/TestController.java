@@ -31,8 +31,7 @@ public class TestController {
     public ResponseEntity<Response> swaggerTest() {
         return Response.SUCCESS(ResponseCode.SUCCESS, "data");
     }
-
-    //ci 확인 확인~
+    
     @GetMapping("/response/success")
     public ResponseEntity<Response> responseSuccessTest() {
         log.info("test");

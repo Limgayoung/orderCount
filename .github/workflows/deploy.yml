@@ -10,7 +10,8 @@ permissions:
 env:
   DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
   DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-  DOCKER_REPO: ${{secrets.DOCKER_REPO}}    
+  DOCKER_REPO: ${{secrets.DOCKER_REPO}}
+  APPLICATION: ${{secrets.APPLICATION}}
   
 jobs:
   CD:
@@ -37,14 +38,12 @@ jobs:
     
     ## create application.yml
     - name: Make Application.yml
-      env:
-        APPLICATION: ${{secrets.APPLICATION}}
       shell: bash
       run: |        
         mkdir -p ./src/main/resources
         cd ./src/main/resources
         touch ./application.yml        
-        echo $APPLICATION | base64 --decode > ./application.yml              
+        echo $APPLICATION > ./application.yml              
       
     ## gradle build
     - name: Build

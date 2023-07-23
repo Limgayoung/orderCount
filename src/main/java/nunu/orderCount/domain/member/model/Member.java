@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import nunu.orderCount.global.common.BaseEntity;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Getter
@@ -19,14 +20,17 @@ public class Member extends BaseEntity {
 
     private String email; //id
     private String password;
-    private String storeName;
-    private String role;
+    private Role role;
+    private boolean isLocked;
     //todo: refresh, zigzag token 은 redis 로 관리할 예정
+    //todo: platform 추가
 
     @Builder
-    public Member(String email, String password, String storeName) {
+    public Member(String email, String password) {
         this.email = email;
         this.password = password;
-        this.storeName = storeName;
+        this.isLocked = false;
+        this.role = Role.OWNER;
     }
+    //todo: role 관련해서 수정할 것.
 }

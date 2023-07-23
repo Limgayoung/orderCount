@@ -1,11 +1,11 @@
 package nunu.orderCount.global.config.jwt;
 
 import io.jsonwebtoken.*;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Role;
+import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.auth.CustomAuthentication;
 import nunu.orderCount.global.error.ErrorCode;
-import nunu.orderCount.global.error.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -13,16 +13,24 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class JwtProvider {
-    @Value("${jwt.token.secret-key}")
-    private String SECRET_KEY;
-    @Value("${jwt.token.access-expiration}")
-    private Long RFT_EXPIRE_TIME;
-    @Value("${jwt.token.refresh-expiration}")
-    private Long ACT_EXPIRE_TIME;
-    private String AUTHORIZATION = "Authorization";
+    private final byte[] SECRET_KEY;
+    private final Long ACT_EXPIRE_TIME;
+    private final Long RFT_EXPIRE_TIME;
+    public final static String AUTHORIZATION = "Authorization";
+    public final MemberRepository memberRepository;
+
+    public JwtProvider(@Value("${jwt.token.secret-key}") String SECRET_KEY,
+                       @Value("${jwt.token.access-expiration}") Long ACT_EXPIRE_TIME,
+                       @Value("${jwt.token.refresh-expiration}") Long RFT_EXPIRE_TIME,
+                       MemberRepository memberRepository) {
+        this.SECRET_KEY = SECRET_KEY.getBytes();
+        this.ACT_EXPIRE_TIME = ACT_EXPIRE_TIME;
+        this.RFT_EXPIRE_TIME = RFT_EXPIRE_TIME;
+        this.memberRepository = memberRepository;
+    }
 
     //jwt 토큰 발급
     public JwtToken issue(Long id, Role role){ //todo: id 외의 다른 대리키 찾을 것
@@ -33,27 +41,24 @@ public class JwtProvider {
     }
 
     //토큰 재발급 (refresh token 이용)
-    public JwtToken reissue(String accessToken, String refreshToken){
-        getTokenInfo(refreshToken); //토큰 만료/유효성 확인
+    public String reissue(String accessToken, String refreshToken){
+        isValidToken(refreshToken); //토큰 만료/유효성 확인
         String recreatedAccessToken = recreateAccessToken(accessToken);
 
-        return JwtToken.builder()
-                .accessToken(recreatedAccessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return recreatedAccessToken;
     }
 
     //access token 생성
     public String createAccessToken(Long id, Role role){
         Claims claims = Jwts.claims();
         claims.put("userId", id);
-        claims.put("role", role);
+        claims.put("role", role.getRole());
         return Jwts.builder()
                 .setSubject("UserInfo")
                 .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + (ACT_EXPIRE_TIME)))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
 
     }
@@ -63,7 +68,7 @@ public class JwtProvider {
         return Jwts.builder()
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + (RFT_EXPIRE_TIME)))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes())
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
@@ -76,24 +81,28 @@ public class JwtProvider {
                     .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(accessToken);
             Claims body = claimsJws.getBody();
-            userId = Long.parseLong((String) body.get("userId"));
+            userId = Long.parseLong(String.valueOf(body.get("userId")));
             role = Role.of((String) body.get("role"));
         } catch (ExpiredJwtException e) {
-            userId = Long.parseLong((String) e.getClaims().get("userId"));
+            userId = Long.parseLong(String.valueOf(e.getClaims().get("userId")));
             role = Role.of((String) e.getClaims().get("role"));
         }
+
         //todo: 이전 토큰은 사용할 수 있어도 되는가? -> 만료 시간이 30분 정도로 짧지만 따로 삭제를 해줘야 하는건가?
         return createAccessToken(userId, role);
     }
 
     //토큰에서 Authentication 객체 반환
     public Authentication getAuthentication(String accessToken){
-        Jws<Claims> claims = getTokenInfo(accessToken);
+        Jws<Claims> claims = getClaims(accessToken);
         Claims body = claims.getBody();
-        Long userId = Long.parseLong((String) body.get("userId"));
+        Long userId = Long.parseLong(String.valueOf(body.get("userId")));
         Role role = Role.of((String) body.get("role"));
 
-        //todo: 해당하는 memberId가 존재하는지 확인 필요
+        if(!memberRepository.existsById(userId)){
+            throw new CustomJwtException(ErrorCode.JWT_ERROR, "유효하지 않은 토큰입니다.");
+        }
+
         return new CustomAuthentication(userId, role);
     }
 
@@ -103,18 +112,36 @@ public class JwtProvider {
     }
     
     //토큰 유효성 확인, get claims
-    private Jws<Claims> getTokenInfo(String token){
+    public boolean isValidToken(String token){
+        if(token== null) throw new CustomJwtException(ErrorCode.JWT_ERROR, "빈 값입니다.");
+        getClaims(token);
+        return true;
+    }
+
+    public Long getMemberId(String accessToken){
+        Long userId;
+        try{
+            Jws<Claims> claimsJws = Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(accessToken);
+            Claims body = claimsJws.getBody();
+            userId = Long.parseLong(String.valueOf(body.get("userId")));
+        } catch (ExpiredJwtException e) {
+            userId = Long.parseLong(String.valueOf(e.getClaims().get("userId")));
+        }
+        return userId;
+    }
+
+    private Jws<Claims> getClaims(String token){
         try{
             return Jwts.parser()
                     .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(token);
         } catch (ExpiredJwtException e){ //유효기간 만료
-            throw new BusinessException(ErrorCode.JWT_EXPIRED_ERROR);
-        } catch (UnsupportedJwtException | MalformedJwtException | SignatureException e){ //형식/구성/서명 오류
-            throw new BusinessException(ErrorCode.JWT_FORMAT_ERROR);
+            throw new CustomJwtException(ErrorCode.JWT_EXPIRED_ERROR);
         } catch (JwtException e){ //그 외 jwt 오류
-            throw new BusinessException(ErrorCode.JWT_ERROR);
+//            log.info("e: {}", e);
+            throw new CustomJwtException(ErrorCode.JWT_ERROR);
         }
     }
-
 }

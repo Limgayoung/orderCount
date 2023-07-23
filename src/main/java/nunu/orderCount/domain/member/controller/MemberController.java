@@ -12,6 +12,7 @@ import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.service.MemberService;
 import nunu.orderCount.global.error.ErrorResponse;
 import nunu.orderCount.global.response.Response;
@@ -19,8 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Tag(name = "Member 관련 API")
@@ -58,14 +57,12 @@ public class MemberController {
     @Operation(summary = "reissue API", description = "access token 재발급")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "S200", description = "토큰 재발급 성공", content = @Content(schema = @Schema(implementation = Response.class))),
-            @ApiResponse(responseCode = "S200(data)", description = "토큰 재발급 성공 data", content = @Content(schema = @Schema(implementation = Map.class)))
+            @ApiResponse(responseCode = "S200(data)", description = "토큰 재발급 성공 data", content = @Content(schema = @Schema(implementation = ResponseReissueDto.class)))
     })
     @PostMapping("/reissue")
     public ResponseEntity<Response> reissueToken(@RequestBody @Valid RequestReissueDto dto) {
         String reissueToken = memberService.refreshToken(dto);
-        Map<String, String> response = new HashMap<>();
-        response.put("accessToken", reissueToken);
-        return Response.SUCCESS("토큰을 재발급했습니다.", response);
+        return Response.SUCCESS("토큰을 재발급했습니다.", new ResponseReissueDto(reissueToken));
     }
 
     //refresh zigzag token

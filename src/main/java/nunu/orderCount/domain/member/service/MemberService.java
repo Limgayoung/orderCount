@@ -29,20 +29,25 @@ public class MemberService {
     private final JwtProvider jwtProvider;
     private final RedisUtil redisUtil;
     private final String REDIS_REFRESH_TOKEN = "refresh-token:";
+    private final String REDIS_ZIGZAG_TOKEN = "zigzag-token:";
     @Value("${jwt.token.refresh-expiration}")
     private Long RFT_EXPIRE_TIME;
+
+    @Value("${webclient.zigzag.expire-duration}")
+    private Long ZIGZAG_EXPIRE_TIME;
 
 
     //join
     public void join(RequestJoinDto dto){
         String zigzagToken = zigzagAuthService.zigzagLogin(new RequestZigzagLoginDto(dto.getEmail(), dto.getPassword()));
-        //todo: cookie는 redis에 저장할 것
         //todo: zigzag에 포함된 가게 모두 저장 (store entity 생성 필요) (추후 구현)
         Member member = Member.builder()
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .build();
+
         memberRepository.save(member);
+        redisUtil.setData(REDIS_ZIGZAG_TOKEN+member.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
     }
 
     //login

@@ -26,6 +26,22 @@ public class Response<T> {
         this.timestamp = LocalDateTime.now();
     }
 
+    public static <T>ResponseEntity<Response> SUCCESS(T data){
+        return new ResponseEntity( Response.builder()
+                .status(ResponseStatus.SUCCESS)
+                .code("S200")
+                .message("ok")
+                .data(data)
+                .build(), HttpStatus.OK);
+    }
+    public static <T>ResponseEntity<Response> SUCCESS(String message, T data){
+        return new ResponseEntity( Response.builder()
+                .status(ResponseStatus.SUCCESS)
+                .code("S200")
+                .message(message)
+                .data(data)
+                .build(), HttpStatus.OK);
+    }
     public static <T>ResponseEntity<Response> SUCCESS(ResponseCode code, T data){
         return new ResponseEntity( Response.builder()
                 .status(ResponseStatus.SUCCESS)

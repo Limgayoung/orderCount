@@ -2,6 +2,7 @@ package nunu.orderCount.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.domain.member.exception.InvalidRefreshTokenException;
 import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
@@ -11,8 +12,10 @@ import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
+import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagAuthService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,11 @@ public class MemberService {
     private final ZigzagAuthService zigzagAuthService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final RedisUtil redisUtil;
+    private final String REDIS_REFRESH_TOKEN = "refresh-token:";
+    @Value("${jwt.token.refresh-expiration}")
+    private Long RFT_EXPIRE_TIME;
+
 
     //join
     public void join(RequestJoinDto dto){
@@ -48,8 +56,7 @@ public class MemberService {
         
         //jwt 토큰 발급
         JwtToken jwtToken = jwtProvider.issue(member.getMemberId(), member.getRole());
-        //todo: redis에 refresh token 저장해야 함 (이전 토큰 삭제 필요)
-
+        redisUtil.setData(REDIS_REFRESH_TOKEN+member.getMemberId(), jwtToken.getRefreshToken(), RFT_EXPIRE_TIME);
         return new ResponseLoginDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
 
@@ -59,11 +66,14 @@ public class MemberService {
         jwtProvider.isValidToken(dto.getRefreshToken());
         //access token에서 member id 가져오기
         Long memberId = jwtProvider.getMemberId(dto.getAccessToken());
-        //todo: db의 refresh token과 일치하는지 검사 -> redis에서 꺼내야 함
-        
+
+        //db 값과 비교
+        String dbRefreshToken = redisUtil.getData(REDIS_REFRESH_TOKEN + memberId);
+        if (!dbRefreshToken.equals(dto.getRefreshToken())) {
+            throw new InvalidRefreshTokenException("사용자의 refresh token과 일치하지 않습니다");
+        }
         //토큰 생성
         String recreateAccessToken = jwtProvider.recreateAccessToken(dto.getAccessToken());
-        //todo: db 업데이트
 
         return recreateAccessToken;
     }

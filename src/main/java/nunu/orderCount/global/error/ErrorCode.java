@@ -34,7 +34,8 @@ public enum ErrorCode {
     INVALID_TOKEN(400, "S004", "잘못된 토큰입니다."),
 
     //member
-    LOGIN_FAIL(400, "M001", "로그인에 실패했습니다.");
+    LOGIN_FAIL(400, "M001", "로그인에 실패했습니다."),
+    INVALID_REFRESH_TOKEN(400, "M002", "유효하지 않은 토큰입니다.");
 
 
     private final Integer status;

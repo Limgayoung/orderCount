@@ -53,6 +53,16 @@ dependencies {
 
 	//json parser
 	implementation group: 'com.googlecode.json-simple', name:'json-simple', version:'1.1.1'
+
+	//security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	//jwt
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+
+	//redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 tasks.named('test') {

@@ -19,7 +19,7 @@ public class SwaggerConfig {
     public GroupedOpenApi nonSecurityGroup(){ //jwt 토큰 불필요한 api
         return GroupedOpenApi.builder()
                 .group("token 불필요 API")
-                .pathsToMatch("/auth/**", "/test/**")
+                .pathsToMatch("/members/join", "/members/login", "/members/reissue", "/test/**")
                 .build();
     }
 
@@ -27,7 +27,7 @@ public class SwaggerConfig {
     public GroupedOpenApi securityGroup(){ //jwt 토큰 필요한 api
         return GroupedOpenApi.builder()
                 .group("token 필요 API")
-                .pathsToExclude("/auth/**", "/test/**")
+                .pathsToExclude("/members/**", "/test/**")
                 .build();
     }
 

@@ -48,14 +48,14 @@ public class SecurityConfig {
                 .authorizeRequests()
                 //swagger, test 관련 모든 권한 승인
                 .antMatchers(
-                        "/swagger-ui/**", "/api-docs/**", "swagger-resources/**", "/test/**"
+                        "/swagger-ui/**", "/api-docs/**", "swagger-resources/**", "/api/test/**"
                 ).permitAll()
                 //join, login, reissue 시 권한 승인
-                .antMatchers("/members/join", "/members/login", "/members/reissue").permitAll()
+                .antMatchers("/api/members/join", "/api/members/login", "/api/members/reissue").permitAll()
                 //admin 권한 허용
-                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/api/admin/**").hasRole("ADMIN")
                 //그 외 모든 member 권한 허용
-                .antMatchers("/**").hasAnyRole("OWNER", "ADMIN")
+                .antMatchers("/api/**").hasAnyRole("OWNER", "ADMIN")
                 .anyRequest().denyAll()
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

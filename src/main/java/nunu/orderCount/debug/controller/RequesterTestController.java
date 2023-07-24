@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 @Tag(name = "requester test api", description = "debug용 zigzag requester api 모음")
 @RestController
-@RequestMapping("/test/requester")
+@RequestMapping("/api/test/requester")
 @RequiredArgsConstructor
 public class RequesterTestController {
     private final ZigzagAuthService zigzagAuthService;

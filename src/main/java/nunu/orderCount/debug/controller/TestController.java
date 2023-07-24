@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Tag(name = "test api", description = "debug용 api 모음")
 @RestController
-@RequestMapping("/test")
+@RequestMapping("/api/test")
 @RequiredArgsConstructor
 public class TestController {
     private final TestService testService;

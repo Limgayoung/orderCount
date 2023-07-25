@@ -13,7 +13,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class CustomAuthentication implements Authentication {
 
-    private final Long userId;
+    private final String email;
     private final Role role;
 
     @Override
@@ -25,17 +25,17 @@ public class CustomAuthentication implements Authentication {
 
     @Override
     public Object getCredentials() {
-        return userId;
+        return email;
     }
 
     @Override
     public Object getDetails() {
-        return userId;
+        return email;
     }
 
     @Override
     public Object getPrincipal() {
-        return userId;
+        return email;
     }
 
     @Override

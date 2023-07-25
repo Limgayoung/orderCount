@@ -33,9 +33,9 @@ public class JwtProvider {
     }
 
     //jwt 토큰 발급
-    public JwtToken issue(Long id, Role role){ //todo: id 외의 다른 대리키 찾을 것
+    public JwtToken issue(String email, Role role){ //todo: id 외의 다른 대리키 찾을 것
         return JwtToken.builder()
-                .accessToken(createAccessToken(id, role))
+                .accessToken(createAccessToken(email, role))
                 .refreshToken(createRefreshToken())
                 .build();
     }
@@ -49,9 +49,9 @@ public class JwtProvider {
     }
 
     //access token 생성
-    public String createAccessToken(Long id, Role role){
+    public String createAccessToken(String email, Role role){
         Claims claims = Jwts.claims();
-        claims.put("userId", id);
+        claims.put("email", email);
         claims.put("role", role.getRole());
         return Jwts.builder()
                 .setSubject("UserInfo")
@@ -73,7 +73,7 @@ public class JwtProvider {
     }
 
     public String recreateAccessToken(String accessToken){
-        Long userId;
+        String email;
         Role role;
 
         try{
@@ -81,29 +81,29 @@ public class JwtProvider {
                     .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(accessToken);
             Claims body = claimsJws.getBody();
-            userId = Long.parseLong(String.valueOf(body.get("userId")));
+            email = String.valueOf(body.get("email"));
             role = Role.of((String) body.get("role"));
         } catch (ExpiredJwtException e) {
-            userId = Long.parseLong(String.valueOf(e.getClaims().get("userId")));
+            email = String.valueOf(e.getClaims().get("email"));
             role = Role.of((String) e.getClaims().get("role"));
         }
 
         //todo: 이전 토큰은 사용할 수 있어도 되는가? -> 만료 시간이 30분 정도로 짧지만 따로 삭제를 해줘야 하는건가?
-        return createAccessToken(userId, role);
+        return createAccessToken(email, role);
     }
 
     //토큰에서 Authentication 객체 반환
     public Authentication getAuthentication(String accessToken){
         Jws<Claims> claims = getClaims(accessToken);
         Claims body = claims.getBody();
-        Long userId = Long.parseLong(String.valueOf(body.get("userId")));
+        String email = String.valueOf(body.get("email"));
         Role role = Role.of((String) body.get("role"));
 
-        if(!memberRepository.existsById(userId)){
+        if(!memberRepository.existsByEmail(email)){
             throw new CustomJwtException(ErrorCode.JWT_ERROR, "유효하지 않은 토큰입니다.");
         }
 
-        return new CustomAuthentication(userId, role);
+        return new CustomAuthentication(email, role);
     }
 
     //사용자가 보낸 Authorization 필드에서 토큰 추출
@@ -118,18 +118,18 @@ public class JwtProvider {
         return true;
     }
 
-    public Long getMemberId(String accessToken){
-        Long userId;
+    public String getMemberEmail(String accessToken){
+        String email;
         try{
             Jws<Claims> claimsJws = Jwts.parser()
                     .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(accessToken);
             Claims body = claimsJws.getBody();
-            userId = Long.parseLong(String.valueOf(body.get("userId")));
+            email =String.valueOf(body.get("email"));
         } catch (ExpiredJwtException e) {
-            userId = Long.parseLong(String.valueOf(e.getClaims().get("userId")));
+            email = String.valueOf(e.getClaims().get("email"));
         }
-        return userId;
+        return email;
     }
 
     private Jws<Claims> getClaims(String token){

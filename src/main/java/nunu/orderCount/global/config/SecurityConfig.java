@@ -7,7 +7,6 @@ import nunu.orderCount.global.error.ErrorCode;
 import nunu.orderCount.global.error.ExceptionHandlerFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,7 +28,6 @@ import java.io.IOException;
 @EnableWebSecurity
 @RequiredArgsConstructor
 //@EnableGlobalMethodSecurity(securedEnabled = true) //controller api 별로 다르게 적용하고 싶을 때 사용
-@Order(1)
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;

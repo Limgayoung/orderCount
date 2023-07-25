@@ -16,6 +16,7 @@ import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagAuthService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +61,7 @@ public class MemberService {
         //todo: 계정 정지 여부 확인 필요
         
         //jwt 토큰 발급
-        JwtToken jwtToken = jwtProvider.issue(member.getMemberId(), member.getRole());
+        JwtToken jwtToken = jwtProvider.issue(member.getEmail(), member.getRole());
         redisUtil.setData(REDIS_REFRESH_TOKEN+member.getMemberId(), jwtToken.getRefreshToken(), RFT_EXPIRE_TIME);
         return new ResponseLoginDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
@@ -70,10 +71,11 @@ public class MemberService {
         //refresh token 검증
         jwtProvider.isValidToken(dto.getRefreshToken());
         //access token에서 member id 가져오기
-        Long memberId = jwtProvider.getMemberId(dto.getAccessToken());
+        String memberEmail = jwtProvider.getMemberEmail(dto.getAccessToken());
+        Member member = memberRepository.findByEmail(memberEmail).orElseThrow(() -> new InvalidRefreshTokenException("존재하지 않는 email입니다."));
 
         //db 값과 비교
-        String dbRefreshToken = redisUtil.getData(REDIS_REFRESH_TOKEN + memberId);
+        String dbRefreshToken = redisUtil.getData(REDIS_REFRESH_TOKEN + member.getMemberId());
         if (!dbRefreshToken.equals(dto.getRefreshToken())) {
             throw new InvalidRefreshTokenException("사용자의 refresh token과 일치하지 않습니다");
         }

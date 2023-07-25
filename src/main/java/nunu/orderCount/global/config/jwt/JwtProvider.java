@@ -33,7 +33,7 @@ public class JwtProvider {
     }
 
     //jwt 토큰 발급
-    public JwtToken issue(String email, Role role){ //todo: id 외의 다른 대리키 찾을 것
+    public JwtToken issue(String email, Role role){
         return JwtToken.builder()
                 .accessToken(createAccessToken(email, role))
                 .refreshToken(createRefreshToken())
@@ -64,7 +64,6 @@ public class JwtProvider {
     }
     //refresh token 생성
     public String createRefreshToken(){
-        //todo: 이전에 발급했던 refreshToken은 만료시켜야 함
         return Jwts.builder()
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + (RFT_EXPIRE_TIME)))
@@ -88,7 +87,6 @@ public class JwtProvider {
             role = Role.of((String) e.getClaims().get("role"));
         }
 
-        //todo: 이전 토큰은 사용할 수 있어도 되는가? -> 만료 시간이 30분 정도로 짧지만 따로 삭제를 해줘야 하는건가?
         return createAccessToken(email, role);
     }
 
@@ -140,7 +138,6 @@ public class JwtProvider {
         } catch (ExpiredJwtException e){ //유효기간 만료
             throw new CustomJwtException(ErrorCode.JWT_EXPIRED_ERROR);
         } catch (JwtException e){ //그 외 jwt 오류
-//            log.info("e: {}", e);
             throw new CustomJwtException(ErrorCode.JWT_ERROR);
         }
     }

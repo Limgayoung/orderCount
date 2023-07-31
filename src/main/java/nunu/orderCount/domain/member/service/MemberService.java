@@ -8,6 +8,7 @@ import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
@@ -38,16 +39,19 @@ public class MemberService {
 
 
     //join
-    public void join(RequestJoinDto dto){
+    public ResponseJoinDto join(RequestJoinDto dto){
         String zigzagToken = zigzagAuthService.zigzagLogin(new RequestZigzagLoginDto(dto.getEmail(), dto.getPassword()));
         //todo: zigzag에 포함된 가게 모두 저장 (store entity 생성 필요) (추후 구현)
+
         Member member = Member.builder()
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .build();
 
-        memberRepository.save(member);
-        redisUtil.setData(REDIS_ZIGZAG_TOKEN+member.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
+        ResponseJoinDto responseJoinDto = ResponseJoinDto.of(memberRepository.save(member));
+        redisUtil.setData(REDIS_ZIGZAG_TOKEN+responseJoinDto.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
+
+        return responseJoinDto;
     }
 
     //login

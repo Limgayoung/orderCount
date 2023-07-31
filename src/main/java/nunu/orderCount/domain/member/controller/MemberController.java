@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.service.MemberService;
@@ -36,8 +37,8 @@ public class MemberController {
     })
     @PostMapping("/join")
     public ResponseEntity<Response> join(@RequestBody @Valid RequestJoinDto dto) {
-        memberService.join(dto);
-        return Response.SUCCESS();
+        ResponseJoinDto responseJoinDto = memberService.join(dto);
+        return Response.SUCCESS("회원가입을 성공했습니다.", responseJoinDto);
     }
 
     @Operation(summary = "login API", description = "email과 password로 로그인 진행, jwt 발급")

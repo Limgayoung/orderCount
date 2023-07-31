@@ -31,7 +31,7 @@ public class RequesterTestController {
 
     @GetMapping("/orderList")
     public ResponseEntity<Response> orderListTest(@RequestParam("startDate") Integer startDate,
-                                                  @RequestParam("endEdate") Integer endDate,
+                                                  @RequestParam("endDate") Integer endDate,
                                                   @RequestParam("cookieString") String cookie) {
         return Response.SUCCESS(ResponseCode.SUCCESS, zigzagOrderService.zigzagOrderListRequester(cookie, startDate, endDate));
     }

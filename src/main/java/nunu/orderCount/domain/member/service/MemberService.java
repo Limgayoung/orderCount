@@ -52,7 +52,7 @@ public class MemberService {
 
     //login
     public ResponseLoginDto login(RequestLoginDto dto){
-        Member member = memberRepository.findByEmail(dto.getEmail()).orElseThrow(() -> new LoginFailException());
+        Member member = memberRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new LoginFailException("해당 아이디를 가진 회원이 존재하지 않습니다."));
 
         if (!passwordEncoder.matches(dto.getPassword(), member.getPassword())) {
             throw new LoginFailException("비밀번호가 일치하지 않습니다");

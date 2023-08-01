@@ -66,7 +66,7 @@ public class MemberService {
         //jwt 토큰 발급
         JwtToken jwtToken = jwtProvider.issue(member.getEmail(), member.getRole());
         redisUtil.setData(REDIS_REFRESH_TOKEN+member.getMemberId(), jwtToken.getRefreshToken(), RFT_EXPIRE_TIME);
-        return new ResponseLoginDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+        return new ResponseLoginDto(member.getMemberId(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
 
     //jwt reissue

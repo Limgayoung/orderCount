@@ -10,6 +10,7 @@ import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
@@ -70,7 +71,7 @@ public class MemberService {
     }
 
     //jwt reissue
-    public String refreshToken(RequestReissueDto dto){
+    public ResponseReissueDto reissueToken(RequestReissueDto dto){
         //refresh token 검증
         jwtProvider.isValidToken(dto.getRefreshToken());
         //access token에서 member id 가져오기
@@ -83,9 +84,9 @@ public class MemberService {
             throw new InvalidRefreshTokenException("사용자의 refresh token과 일치하지 않습니다");
         }
         //토큰 생성
-        String recreateAccessToken = jwtProvider.recreateAccessToken(dto.getAccessToken());
+        String recreateAccessToken = jwtProvider.reissue(dto.getAccessToken());
 
-        return recreateAccessToken;
+        return new ResponseReissueDto(recreateAccessToken);
     }
 
     //zigzag token 갱신

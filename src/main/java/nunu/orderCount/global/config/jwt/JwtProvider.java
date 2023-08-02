@@ -41,8 +41,7 @@ public class JwtProvider {
     }
 
     //토큰 재발급 (refresh token 이용)
-    public String reissue(String accessToken, String refreshToken){
-        isValidToken(refreshToken); //토큰 만료/유효성 확인
+    public String reissue(String accessToken){
         String recreatedAccessToken = recreateAccessToken(accessToken);
 
         return recreatedAccessToken;

@@ -62,8 +62,8 @@ public class MemberController {
     })
     @PostMapping("/reissue")
     public ResponseEntity<Response> reissueToken(@RequestBody @Valid RequestReissueDto dto) {
-        String reissueToken = memberService.refreshToken(dto);
-        return Response.SUCCESS("토큰을 재발급했습니다.", new ResponseReissueDto(reissueToken));
+        ResponseReissueDto reissueToken = memberService.reissueToken(dto);
+        return Response.SUCCESS("토큰을 재발급했습니다.", reissueToken);
     }
 
     //refresh zigzag token

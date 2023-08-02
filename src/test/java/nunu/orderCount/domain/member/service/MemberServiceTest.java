@@ -5,23 +5,24 @@ import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
+import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
 import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagAuthService;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -50,6 +51,12 @@ class MemberServiceTest {
     @InjectMocks
     private MemberService memberService;
 
+    private String email = "email@email.com";
+    private String password = "password";
+    private String zigzagToken = "zigzagToken";
+    private String accessToken = "accessToken";
+    private String refreshToken = "refreshToken";
+
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(
@@ -64,15 +71,16 @@ class MemberServiceTest {
         );
     }
 
+    @DisplayName("회원가입")
     @Test
     void join() {
         //given
-        RequestJoinDto dto = new RequestJoinDto("email@email", "password");
+        RequestJoinDto dto = new RequestJoinDto(email, password);
 
         Member testMember = createTestMember(dto.getEmail(), dto.getPassword());
 
         doReturn(testMember).when(memberRepository).save(any(Member.class));
-        doReturn("zigzagToken").when(zigzagAuthService).zigzagLogin(any(RequestZigzagLoginDto.class));
+        doReturn(zigzagToken).when(zigzagAuthService).zigzagLogin(any(RequestZigzagLoginDto.class));
         doNothing().when(redisUtil).setData(anyString(), anyString(), anyLong());
 
         //when
@@ -82,13 +90,14 @@ class MemberServiceTest {
         assertThat(testMember.getMemberId()).isEqualTo(responseJoinDto.getMemberId());
     }
 
+    @DisplayName("로그인")
     @Test
     void login() {
         //given
-        RequestLoginDto requestLoginDto = new RequestLoginDto("email@email", "password");
+        RequestLoginDto requestLoginDto = new RequestLoginDto(email, password);
         Member testMember = createTestMember(requestLoginDto.getEmail(), requestLoginDto.getPassword());
 
-        JwtToken testJwtToken = new JwtToken("accessToken", "refreshToken");
+        JwtToken testJwtToken = new JwtToken(accessToken, refreshToken);
 
         doReturn(Optional.of(testMember)).when(memberRepository).findByEmail(anyString());
         doReturn(testJwtToken).when(jwtProvider).issue(anyString(), any(Role.class));
@@ -103,9 +112,22 @@ class MemberServiceTest {
         assertThat(responseLoginDto.getMemberId()).isEqualTo(testMember.getMemberId());
     }
 
+    @DisplayName("access token 재발급")
     @Test
     void refreshToken() {
-        
+        //given
+        RequestReissueDto requestReissueDto = new RequestReissueDto(refreshToken, accessToken);
+        Member testMember = createTestMember(email, password);
+        doReturn(testMember.getEmail()).when(jwtProvider).getMemberEmail(anyString());
+        doReturn(Optional.of(testMember)).when(memberRepository).findByEmail(anyString());
+        doReturn(refreshToken).when(redisUtil).getData(anyString());
+        doReturn("recreatedAccessToken").when(jwtProvider).reissue(anyString());
+
+        //when
+        ResponseReissueDto reissueToken = memberService.reissueToken(requestReissueDto);
+
+        //then
+        assertThat(reissueToken.getAccessToken()).isNotEqualTo(requestReissueDto.getAccessToken());
     }
 
     private Member createTestMember(String email, String password){
@@ -122,4 +144,6 @@ class MemberServiceTest {
         );
         return testMember;
     }
+
+
 }

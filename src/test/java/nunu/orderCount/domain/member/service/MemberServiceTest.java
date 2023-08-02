@@ -1,6 +1,7 @@
 package nunu.orderCount.domain.member.service;
 
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.domain.member.exception.DuplicateEmailException;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
@@ -29,9 +30,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -77,7 +78,7 @@ class MemberServiceTest {
         //given
         RequestJoinDto dto = new RequestJoinDto(email, password);
 
-        Member testMember = createTestMember(dto.getEmail(), dto.getPassword());
+        Member testMember = createTestMember(dto.getEmail(), dto.getPassword(), 1L);
 
         doReturn(testMember).when(memberRepository).save(any(Member.class));
         doReturn(zigzagToken).when(zigzagAuthService).zigzagLogin(any(RequestZigzagLoginDto.class));
@@ -88,6 +89,9 @@ class MemberServiceTest {
         //then
         assertThat(testMember.getEmail()).isEqualTo(responseJoinDto.getEmail());
         assertThat(testMember.getMemberId()).isEqualTo(responseJoinDto.getMemberId());
+
+        //verify
+        verify(memberRepository, times(1)).save(any(Member.class));
     }
 
     @DisplayName("로그인")
@@ -95,7 +99,7 @@ class MemberServiceTest {
     void login() {
         //given
         RequestLoginDto requestLoginDto = new RequestLoginDto(email, password);
-        Member testMember = createTestMember(requestLoginDto.getEmail(), requestLoginDto.getPassword());
+        Member testMember = createTestMember(requestLoginDto.getEmail(), requestLoginDto.getPassword(), 1L);
 
         JwtToken testJwtToken = new JwtToken(accessToken, refreshToken);
 
@@ -110,6 +114,9 @@ class MemberServiceTest {
         //then
         assertThat(responseLoginDto.getAccessToken()).isNotEmpty();
         assertThat(responseLoginDto.getMemberId()).isEqualTo(testMember.getMemberId());
+
+        //verify
+        verify(memberRepository, times(1)).findByEmail(anyString());
     }
 
     @DisplayName("access token 재발급")
@@ -117,7 +124,7 @@ class MemberServiceTest {
     void refreshToken() {
         //given
         RequestReissueDto requestReissueDto = new RequestReissueDto(refreshToken, accessToken);
-        Member testMember = createTestMember(email, password);
+        Member testMember = createTestMember(email, password, 1L);
         doReturn(testMember.getEmail()).when(jwtProvider).getMemberEmail(anyString());
         doReturn(Optional.of(testMember)).when(memberRepository).findByEmail(anyString());
         doReturn(refreshToken).when(redisUtil).getData(anyString());
@@ -128,9 +135,37 @@ class MemberServiceTest {
 
         //then
         assertThat(reissueToken.getAccessToken()).isNotEqualTo(requestReissueDto.getAccessToken());
+
+        //verify
+        verify(memberRepository, times(1)).findByEmail(anyString());
+        verify(jwtProvider, times(1)).reissue(anyString());
     }
 
-    private Member createTestMember(String email, String password){
+    @DisplayName("중복 이메일 회원가입")
+    @Test
+    void duplicateEmailJoinTest(){
+        //given
+        RequestJoinDto dto = new RequestJoinDto(email, password);
+        Member testMember = createTestMember(dto.getEmail(), dto.getPassword(), 1L);
+
+        doReturn(Optional.empty()).when(memberRepository).findByEmail(dto.getEmail());
+        doReturn(testMember).when(memberRepository).save(any(Member.class));
+        doReturn(zigzagToken).when(zigzagAuthService).zigzagLogin(any(RequestZigzagLoginDto.class));
+        doNothing().when(redisUtil).setData(anyString(), anyString(), anyLong());
+
+        memberService.join(dto);
+        doReturn(Optional.of(testMember)).when(memberRepository).findByEmail(dto.getEmail());
+
+        //when, then
+        assertThatThrownBy(() -> memberService.join(dto))
+                .isInstanceOf(DuplicateEmailException.class);
+
+        //verify
+        verify(memberRepository, times(1)).save(any(Member.class));
+    }
+
+
+    private Member createTestMember(String email, String password, Long memberId){
         Member testMember = Member.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
@@ -139,7 +174,7 @@ class MemberServiceTest {
         ReflectionTestUtils.setField(
                 testMember,
                 "memberId",
-                1L,
+                memberId,
                 Long.class
         );
         return testMember;

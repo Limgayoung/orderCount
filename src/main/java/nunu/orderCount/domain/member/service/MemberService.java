@@ -2,6 +2,7 @@ package nunu.orderCount.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.domain.member.exception.DuplicateEmailException;
 import nunu.orderCount.domain.member.exception.InvalidRefreshTokenException;
 import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.model.Member;
@@ -41,6 +42,10 @@ public class MemberService {
 
     //join
     public ResponseJoinDto join(RequestJoinDto dto){
+        if(memberRepository.findByEmail(dto.getEmail()).isPresent()){
+            throw new DuplicateEmailException("이미 존재하는 이메일입니다.");
+        }
+
         String zigzagToken = zigzagAuthService.zigzagLogin(new RequestZigzagLoginDto(dto.getEmail(), dto.getPassword()));
         //todo: zigzag에 포함된 가게 모두 저장 (store entity 생성 필요) (추후 구현)
 

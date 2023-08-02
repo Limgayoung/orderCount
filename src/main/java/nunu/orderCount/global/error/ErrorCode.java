@@ -35,7 +35,8 @@ public enum ErrorCode {
 
     //member
     LOGIN_FAIL(400, "M001", "로그인에 실패했습니다."),
-    INVALID_REFRESH_TOKEN(400, "M002", "유효하지 않은 토큰입니다.");
+    INVALID_REFRESH_TOKEN(400, "M002", "유효하지 않은 토큰입니다."),
+    DUPLICATE_EMAIL(400, "M003", "이미 존재하는 이메일입니다");
 
 
     private final Integer status;

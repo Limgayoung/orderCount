@@ -2,6 +2,7 @@ package nunu.orderCount.domain.member.service;
 
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.exception.DuplicateEmailException;
+import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
@@ -162,6 +163,44 @@ class MemberServiceTest {
 
         //verify
         verify(memberRepository, times(1)).save(any(Member.class));
+    }
+
+    @DisplayName("잘못된 이메일로 로그인")
+    @Test
+    void notExistEmailLoginTest(){
+        //given
+        RequestLoginDto requestLoginDto = new RequestLoginDto(email, password);
+        Member testMember = createTestMember(requestLoginDto.getEmail(), requestLoginDto.getPassword(), 1L);
+
+        JwtToken testJwtToken = new JwtToken(accessToken, refreshToken);
+
+        doReturn(Optional.empty()).when(memberRepository).findByEmail(anyString());
+
+        //when, then
+        assertThatThrownBy(() -> memberService.login(requestLoginDto))
+                .isInstanceOf(LoginFailException.class);
+
+        //verify
+        verify(memberRepository, times(1)).findByEmail(anyString());
+    }
+    @DisplayName("잘못된 비밀번호로 로그인")
+    @Test
+    void notMatchPasswordTest(){
+        //given
+        RequestLoginDto requestLoginDto = new RequestLoginDto(email, password);
+        Member testMember = createTestMember(requestLoginDto.getEmail(), requestLoginDto.getPassword(), 1L);
+
+        JwtToken testJwtToken = new JwtToken(accessToken, refreshToken);
+
+        doReturn(Optional.of(testMember)).when(memberRepository).findByEmail(anyString());
+        doReturn(false).when(passwordEncoder).matches(requestLoginDto.getPassword(), testMember.getPassword());
+
+        //when, then
+        assertThatThrownBy(() -> memberService.login(requestLoginDto))
+                .isInstanceOf(LoginFailException.class);
+
+        //verify
+        verify(memberRepository, times(1)).findByEmail(anyString());
     }
 
 

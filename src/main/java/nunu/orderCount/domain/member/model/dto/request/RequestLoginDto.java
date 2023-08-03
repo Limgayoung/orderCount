@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
 @Schema(name = "로그인 request dto", description = "로그인 시 필요한 유저 정보")
 @Getter
@@ -18,5 +19,6 @@ public class RequestLoginDto {
     private String email;
 
     @Schema(description = "비밀번호", example = "password1234")
+    @NotEmpty
     private String password;
 }

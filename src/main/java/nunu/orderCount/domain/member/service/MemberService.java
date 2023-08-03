@@ -5,12 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.exception.DuplicateEmailException;
 import nunu.orderCount.domain.member.exception.InvalidRefreshTokenException;
 import nunu.orderCount.domain.member.exception.LoginFailException;
+import nunu.orderCount.domain.member.exception.NotExistMemberException;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
+import nunu.orderCount.domain.member.model.dto.request.RequestRefreshZigzagTokenDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestReissueDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
+import nunu.orderCount.domain.member.model.dto.response.ResponseRefreshZigzagToken;
 import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
@@ -92,6 +95,15 @@ public class MemberService {
         String recreateAccessToken = jwtProvider.reissue(dto.getAccessToken());
 
         return new ResponseReissueDto(recreateAccessToken);
+    }
+
+    public ResponseRefreshZigzagToken refreshZigzagToken(RequestRefreshZigzagTokenDto requestDto) {
+        Member member = memberRepository.findById(requestDto.getMemberId()).orElseThrow(() -> new NotExistMemberException("존재하지 않는 회원 id입니다."));
+
+        String zigzagToken = zigzagAuthService.zigzagLogin(new RequestZigzagLoginDto(member.getEmail(), requestDto.getPassword()));
+        redisUtil.setData(REDIS_ZIGZAG_TOKEN + member.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
+
+        return new ResponseRefreshZigzagToken("done");
     }
 
     //zigzag token 갱신

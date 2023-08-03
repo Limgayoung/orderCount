@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 
 @Schema(name = "회원가입 request dto", description = "회원가입 시 필요한 유저 정보")
 @Getter
@@ -19,6 +20,7 @@ public class RequestJoinDto {
     private String email;
 
     @Schema(description = "비밀번호", example = "password1234")
+    @NotEmpty
     private String password;
 
     //todo: platform 추가

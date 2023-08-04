@@ -1,6 +1,7 @@
 package nunu.orderCount.infra.zigzag.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -8,6 +9,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RequiredArgsConstructor
 public class ZigzagWebClientRequester {
     private final WebClient webClient;
@@ -39,9 +41,11 @@ public class ZigzagWebClientRequester {
                 .bodyValue(requestDto)
                 .exchangeToMono(response -> {
                     if (response.statusCode().is4xxClientError()) {
+                        log.info("webclient 요청을 실패했습니다.");
                         return Mono.error(new ZigzagRequestApiException("webclient 요청을 실패했습니다."));
                     } else if (response.statusCode().is5xxServerError()) {
-                        Mono.error(new ZigzagRequestApiException("zigzag 오류로 응답값을 받아올 수 없습니다."));
+                        log.info("zigzag 오류로 응답값을 받아올 수 없습니다.");
+                        return Mono.error(new ZigzagRequestApiException("zigzag 오류로 응답값을 받아올 수 없습니다."));
                     }
                     return Mono.just(response);
                 })

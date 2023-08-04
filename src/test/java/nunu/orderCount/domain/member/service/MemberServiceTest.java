@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.exception.DuplicateEmailException;
 import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.exception.NotExistMemberException;
+import nunu.orderCount.domain.member.exception.ZigzagLoginFailException;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
@@ -18,6 +19,7 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
 import nunu.orderCount.global.util.RedisUtil;
+import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagAuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -252,9 +254,22 @@ class MemberServiceTest {
             assertThatThrownBy(() -> memberService.refreshZigzagToken(requestDto))
                     .isInstanceOf(NotExistMemberException.class);
         }
+
+        @DisplayName("실패 - zigzag login 실패")
+        @Test
+        void failZigzagLoginTest(){
+            //given
+            RequestRefreshZigzagTokenDto requestDto = new RequestRefreshZigzagTokenDto(1L, "password");
+            Member testMember = createTestMember(email, password, 1L);
+
+            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
+            doReturn(null).when(zigzagAuthService).zigzagLogin(any(RequestZigzagLoginDto.class));
+
+            //when, then
+            assertThatThrownBy(() -> memberService.refreshZigzagToken(requestDto))
+                    .isInstanceOf(ZigzagLoginFailException.class);
+        }
     }
-
-
 
     private Member createTestMember(String email, String password, Long memberId){
         Member testMember = Member.builder()

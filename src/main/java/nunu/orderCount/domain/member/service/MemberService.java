@@ -2,10 +2,7 @@ package nunu.orderCount.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nunu.orderCount.domain.member.exception.DuplicateEmailException;
-import nunu.orderCount.domain.member.exception.InvalidRefreshTokenException;
-import nunu.orderCount.domain.member.exception.LoginFailException;
-import nunu.orderCount.domain.member.exception.NotExistMemberException;
+import nunu.orderCount.domain.member.exception.*;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
@@ -42,8 +39,11 @@ public class MemberService {
     @Value("${webclient.zigzag.expire-duration}")
     private Long ZIGZAG_EXPIRE_TIME;
 
-
-    //join
+    /**
+     * 회원가입
+     * @param dto
+     * @return ResponseJoinDto
+     */
     public ResponseJoinDto join(RequestJoinDto dto){
         if(memberRepository.findByEmail(dto.getEmail()).isPresent()){
             throw new DuplicateEmailException("이미 존재하는 이메일입니다.");
@@ -63,7 +63,11 @@ public class MemberService {
         return responseJoinDto;
     }
 
-    //login
+    /**
+     * 로그인
+     * @param dto
+     * @return ResponseLoginDto
+     */
     public ResponseLoginDto login(RequestLoginDto dto){
         Member member = memberRepository.findByEmail(dto.getEmail()).orElseThrow(()-> new LoginFailException("해당 아이디를 가진 회원이 존재하지 않습니다."));
 
@@ -78,7 +82,11 @@ public class MemberService {
         return new ResponseLoginDto(member.getMemberId(), jwtToken.getAccessToken(), jwtToken.getRefreshToken());
     }
 
-    //jwt reissue
+    /**
+     * jwt access token 재발급
+     * @param dto
+     * @return ResponseReissueDto
+     */
     public ResponseReissueDto reissueToken(RequestReissueDto dto){
         //refresh token 검증
         jwtProvider.isValidToken(dto.getRefreshToken());
@@ -97,14 +105,20 @@ public class MemberService {
         return new ResponseReissueDto(recreateAccessToken);
     }
 
+    /**
+     * zigzag token 갱신
+     * @param requestDto
+     * @return ResponseRefreshZigzagToken
+     */
     public ResponseRefreshZigzagToken refreshZigzagToken(RequestRefreshZigzagTokenDto requestDto) {
         Member member = memberRepository.findById(requestDto.getMemberId()).orElseThrow(() -> new NotExistMemberException("존재하지 않는 회원 id입니다."));
 
         String zigzagToken = zigzagAuthService.zigzagLogin(new RequestZigzagLoginDto(member.getEmail(), requestDto.getPassword()));
+        if (zigzagToken == null) {
+            throw new ZigzagLoginFailException("zigzag에 로그인할 수 없습니다.");
+        }
         redisUtil.setData(REDIS_ZIGZAG_TOKEN + member.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
 
         return new ResponseRefreshZigzagToken("done");
     }
-
-    //zigzag token 갱신
 }

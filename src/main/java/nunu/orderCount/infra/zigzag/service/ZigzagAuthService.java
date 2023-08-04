@@ -29,6 +29,9 @@ public class ZigzagAuthService extends ZigzagWebClientRequester{
     public String zigzagLogin(RequestZigzagLoginDto dto) {
         ClientResponse.Headers headers = postGetHeader(LOGIN_URI, dto);
         List<String> cookie = headers.header("Set-Cookie");
+        if (cookie.isEmpty()) {
+            return null;
+        }
         return cookie.get(0);
     }
 }

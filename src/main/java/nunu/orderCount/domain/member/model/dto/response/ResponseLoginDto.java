@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 @Schema(name = "login response", description = "로그인 완료 시 토큰 전달")
 @RequiredArgsConstructor
 public class ResponseLoginDto {
+    @Schema(description = "memberId",example = "1L")
+    private final Long memberId;
     @Schema(description = "accessToken",example = "alsjdfl.alskdjf.alksjdf")
     private final String accessToken;
     @Schema(description = "refreshToken",example = "asdfasdf.asdfasdf.asfdasdf")

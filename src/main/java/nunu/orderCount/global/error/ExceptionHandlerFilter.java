@@ -1,7 +1,6 @@
 package nunu.orderCount.global.error;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.global.error.exception.BusinessException;

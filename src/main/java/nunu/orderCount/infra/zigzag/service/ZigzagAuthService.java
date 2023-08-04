@@ -1,6 +1,7 @@
 package nunu.orderCount.infra.zigzag.service;
 
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,16 @@ public class ZigzagAuthService extends ZigzagWebClientRequester{
      * @return cookieString
      */
     public String zigzagLogin(RequestZigzagLoginDto dto) {
-        ClientResponse.Headers headers = postGetHeader(LOGIN_URI, dto);
-        List<String> cookie = headers.header("Set-Cookie");
-        return cookie.get(0);
+        try {
+            ClientResponse.Headers headers = postGetHeader(LOGIN_URI, dto);
+            List<String> cookie = headers.header("Set-Cookie");
+            if (cookie.isEmpty()) {
+                return null;
+            }
+            return cookie.get(0);
+        } catch (ZigzagRequestApiException e) {
+            return null;
+        }
+
     }
 }

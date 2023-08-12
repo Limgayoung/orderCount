@@ -37,6 +37,11 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
         return parseProductInfo(responseJson);
     }
 
+    /**
+     * @param cookie
+     * @param productIdList
+     * @return productId, imageUrl
+     */
     public Map<String, String> ZigzagProductImagesUrlRequester(String cookie, List<String> productIdList){
         RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, productIdList);
         String responseJson = post(PRODUCT_REQUEST_URI, cookie, requestZigzagProductInfoDto, String.class);

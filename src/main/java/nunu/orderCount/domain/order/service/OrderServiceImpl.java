@@ -8,6 +8,7 @@ import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
 import nunu.orderCount.domain.order.exception.NotExistMemberException;
+import nunu.orderCount.domain.order.exception.ZigzagRequestFailException;
 import nunu.orderCount.domain.order.model.Order;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
@@ -46,25 +47,18 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public ResponseOrderUpdateDto orderUpdate(RequestOrderUpdateDto dto) {
         Member member = memberRepository.findById(dto.getMemberId()).orElseThrow(() -> new NotExistMemberException("존재하지 않는 회원입니다."));
-        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(member);
         String zigzagToken = redisUtil.getData(REDIS_ZIGZAG_TOKEN + member.getMemberId());
         if (zigzagToken == null) {
-            //zigzag login 필요 예외 메시지
             throw new InvalidZigzagTokenException("zigzag token refresh가 필요합니다.");
         }
 
-        Integer startDate;
+        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(member);
+        Integer startDate = calStartDate(latestOrder);
         Integer endDate = Integer.parseInt(String.valueOf(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
 
-        if(latestOrder.isPresent()) {
-            startDate = Integer.parseInt(String.valueOf(latestOrder.get().getDatePaid()));
-        }
-        else{
-            startDate = Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(2L)));
-        }
         List<ResponseZigzagOrderDto> zigzagOrderList = zigzagOrderService.zigzagOrderListRequester(zigzagToken, startDate, endDate);
         if (zigzagOrderList == null) {
-            //todo: 예외처리
+            throw new ZigzagRequestFailException("zigzag 요청에 실패했습니다. zigzag token refresh가 필요합니다.");
         }
 
         List<String> imageRequestList = new ArrayList<>();
@@ -73,18 +67,18 @@ public class OrderServiceImpl implements OrderService{
         List<Order> saveOrderList = new ArrayList<>();
         for (ResponseZigzagOrderDto zigzagOrder : zigzagOrderList) {
             Optional<Product> orderProduct = productRepository.findByZigzagProductId(zigzagOrder.getProductId());
-            Product product = Product.builder()
-                    .member(member)
-                    .zigzagProductId(zigzagOrder.getProductId())
-                    .name(zigzagOrder.getProductName())
-                    .build();
-            Option option = Option.builder()
-                    .name(zigzagOrder.getOption())
-                    .product(product)
-                    .build();
-            Order order = Order.of(zigzagOrder, member, option);
-
+            Product product;
+            Option option;
             if (orderProduct.isEmpty()) { //product(zigzag image 요청), option save
+                product = Product.builder()
+                        .member(member)
+                        .zigzagProductId(zigzagOrder.getProductId())
+                        .name(zigzagOrder.getProductName())
+                        .build();
+                option = Option.builder()
+                        .name(zigzagOrder.getOption())
+                        .product(product)
+                        .build();
                 saveProductList.add(product);
                 saveOptionList.add(option);
                 imageRequestList.add(zigzagOrder.getProductId());
@@ -92,9 +86,17 @@ public class OrderServiceImpl implements OrderService{
             else{
                 Optional<Option> orderOption = optionRepository.findByProductAndName(orderProduct.get(), zigzagOrder.getOption());
                 if (orderOption.isEmpty()) { //option save
+                    option = Option.builder()
+                            .name(zigzagOrder.getOption())
+                            .product(orderProduct.get())
+                            .build();
                     saveOptionList.add(option);
                 }
+                else{
+                    option = orderOption.get();
+                }
             }
+            Order order = Order.of(zigzagOrder, member, option);
             saveOrderList.add(order);
         }
         if (!imageRequestList.isEmpty()) {
@@ -106,5 +108,14 @@ public class OrderServiceImpl implements OrderService{
         orderRepository.saveAll(saveOrderList);
 
         return new ResponseOrderUpdateDto(saveOrderList.stream().count());
+    }
+
+    private Integer calStartDate(Optional<Order> latestOrder) {
+        if(latestOrder.isPresent()) {
+            return Integer.parseInt(String.valueOf(latestOrder.get().getDatePaid()));
+        }
+        else{
+            return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(2L)));
+        }
     }
 }

@@ -6,6 +6,7 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
+import nunu.orderCount.domain.order.exception.ZigzagRequestFailException;
 import nunu.orderCount.domain.order.model.Order;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
@@ -13,12 +14,9 @@ import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.domain.product.repository.ProductRepository;
 import nunu.orderCount.global.util.RedisUtil;
-import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagOrderService;
 import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,9 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 @Slf4j
@@ -146,8 +142,6 @@ class OrderServiceImplTest {
 
             // zigzagOrderService 에서 주문 정보 받아오기
             doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-            //실패 시 예외 throw -> 프론트에서 비밀번호 입력해서 zigzag login 요청 후 재요청
-            // list의 각 원소가 option에 이미 있는지 확인, 없으면 저장
             doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductId(anyString());
             doReturn(Optional.empty()).when(optionRepository).findByProductAndName(any(Product.class), anyString());
 
@@ -195,11 +189,12 @@ class OrderServiceImplTest {
             doReturn("zigzagToken").when(redisUtil).getData(anyString());
             // orderRepository 에서 last order 찾기
             doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            doReturn(null).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
             
             // zigzagOrderService 에서 주문 정보 받아오기 실패
             //when, then
             assertThatThrownBy(()->orderService.orderUpdate(dto))
-                    .isInstanceOf(ZigzagRequestApiException.class);;
+                    .isInstanceOf(ZigzagRequestFailException.class);;
         }
     }
 

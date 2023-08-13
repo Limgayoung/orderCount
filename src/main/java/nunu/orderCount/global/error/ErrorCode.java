@@ -40,7 +40,8 @@ public enum ErrorCode {
     NOT_EXIST_MEMBER(400, "M004", "존재하지 않는 회원입니다"),
 
     //order
-    INVALID_ZIGZAG_TOKEN(400, "O001", "유효하지 않은 zigzag 토큰입니다");
+    INVALID_ZIGZAG_TOKEN(400, "O001", "유효하지 않은 zigzag 토큰입니다"),
+    FAIL_ZIGZAG_REQUEST(400, "O002", "zigzag api 요청을 실패했습니다");
 
 
     private final Integer status;

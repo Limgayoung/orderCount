@@ -76,6 +76,16 @@ class MemberServiceTest {
                 "RFT_EXPIRE_TIME",
                 10000L
         );
+        ReflectionTestUtils.setField(
+                memberService,
+                "REDIS_REFRESH_TOKEN",
+                "refresh-token: "
+        );
+        ReflectionTestUtils.setField(
+                memberService,
+                "REDIS_ZIGZAG_TOKEN",
+                "zigzag-token: "
+        );
     }
 
     @DisplayName("회원가입")

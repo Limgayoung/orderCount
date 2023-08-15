@@ -38,9 +38,9 @@ class OrderRepositoryTest {
     @Test
     void findTopByMemberOrderByDatePaidDesc() {
         //given
-        Member testMember = createTestMember("email", "password", 1L);
+        Member testMember = createTestMember("email", "password");
         memberRepository.save(testMember);
-        Product testProduct = createTestProduct("pro", "option", "imageurl", 1L, testMember);
+        Product testProduct = createTestProduct("pro", "option", "imageurl", testMember);
         productRepository.save(testProduct);
         Option testOption = Option.builder()
                 .product(testProduct)
@@ -74,34 +74,21 @@ class OrderRepositoryTest {
         //then
         assertThat(latestOrder.get().getMember()).isEqualTo(testMember);
     }
-    private Member createTestMember(String email, String password, Long memberId){
+    private Member createTestMember(String email, String password){
         Member testMember = Member.builder()
                 .email(email)
                 .password(password)
                 .build();
-
-        ReflectionTestUtils.setField(
-                testMember,
-                "memberId",
-                memberId,
-                Long.class
-        );
         return testMember;
     }
 
-    private Product createTestProduct(String name, String url, String zigzagProductId, Long productId, Member member){
+    private Product createTestProduct(String name, String url, String zigzagProductId, Member member){
         Product testProduct = Product.builder()
                 .imageUrl(url)
                 .name(name)
                 .zigzagProductId(zigzagProductId)
                 .member(member)
                 .build();
-        ReflectionTestUtils.setField(
-                testProduct,
-                "productId",
-                productId,
-                Long.class
-        );
         return testProduct;
     }
 }

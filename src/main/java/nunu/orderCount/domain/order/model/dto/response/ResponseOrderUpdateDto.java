@@ -6,5 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class ResponseOrderUpdateDto {
-    private final Long updateOrderCount;
+    private final Long newOrderCount;
+    private final Long changeStatusOrderCount;
 }

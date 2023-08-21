@@ -2,6 +2,7 @@ package nunu.orderCount.infra.zigzag.service;
 
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.infra.zigzag.exception.ZigzagParsingException;
+import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import org.json.simple.JSONArray;
@@ -31,8 +32,12 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
 
     public List<ResponseZigzagOrderDto> zigzagOrderListRequester(String cookie, Integer startDate, Integer endDate) {
         RequestZigzagOrderDto requestZigzagOrderDto = new RequestZigzagOrderDto(query, startDate, endDate);
-        String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);
-        return parseOrderList(responseJson);
+        try {
+            String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);
+            return parseOrderList(responseJson);
+        } catch (ZigzagRequestApiException e) {
+            return null;
+        }
     }
 
     private List<ResponseZigzagOrderDto> parseOrderList(String json){ //필요한 정보만 parsing
@@ -43,7 +48,6 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
             JSONObject jsonObj = (JSONObject) parser.parse(json);
             JSONObject data = (JSONObject) jsonObj.get("data");
             JSONObject partnerOrderItemList = (JSONObject) data.get("partner_order_item_list");
-            long totalCount = (long) partnerOrderItemList.get("total_count");
             JSONArray itemList = (JSONArray) partnerOrderItemList.get("item_list");
 
             for(int i=0;i<itemList.size();i++){
@@ -67,7 +71,6 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                         .productName(productName)
                         .datePaid(datePaid)
                         .quantity(quantity)
-                        .totalOrderCount(totalCount)
                         .build();
 
                 responseList.add(responseZigzagOrderDto);

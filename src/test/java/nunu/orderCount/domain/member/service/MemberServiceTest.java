@@ -19,7 +19,6 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
 import nunu.orderCount.global.util.RedisUtil;
-import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
 import nunu.orderCount.infra.zigzag.model.dto.request.RequestZigzagLoginDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagAuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,6 +75,16 @@ class MemberServiceTest {
                 memberService,
                 "RFT_EXPIRE_TIME",
                 10000L
+        );
+        ReflectionTestUtils.setField(
+                memberService,
+                "REDIS_REFRESH_TOKEN",
+                "refresh-token: "
+        );
+        ReflectionTestUtils.setField(
+                memberService,
+                "REDIS_ZIGZAG_TOKEN",
+                "zigzag-token: "
         );
     }
 

@@ -34,8 +34,10 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RedisUtil redisUtil;
-    private final String REDIS_REFRESH_TOKEN = "refresh-token:";
-    private final String REDIS_ZIGZAG_TOKEN = "zigzag-token:";
+    @Value("${spring.redis.key.refresh-token}")
+    private String REDIS_REFRESH_TOKEN;
+    @Value("${spring.redis.key.zigzag-token}")
+    private String REDIS_ZIGZAG_TOKEN;
     @Value("${jwt.token.refresh-expiration}")
     private Long RFT_EXPIRE_TIME;
 

@@ -55,4 +55,8 @@ public class Order extends BaseEntity {
                 .datePaid(dto.getDatePaid())
                 .build();
     }
+
+    public void setDone() {
+        isDone = true;
+    }
 }

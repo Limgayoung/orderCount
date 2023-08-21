@@ -19,6 +19,7 @@ import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagOrderService;
 import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -42,7 +43,8 @@ public class OrderServiceImpl implements OrderService{
     private final RedisUtil redisUtil;
     private final ZigzagOrderService zigzagOrderService;
     private final ZigzagProductService zigzagProductService;
-    private final String REDIS_ZIGZAG_TOKEN = "zigzag-token:";
+    @Value("${spring.redis.key.zigzag-token}")
+    private String REDIS_ZIGZAG_TOKEN;
 
     @Override
     public ResponseOrderUpdateDto orderUpdate(RequestOrderUpdateDto dto) {
@@ -105,9 +107,17 @@ public class OrderServiceImpl implements OrderService{
         }
         productRepository.saveAll(saveProductList);
         optionRepository.saveAll(saveOptionList);
-        orderRepository.saveAll(saveOrderList);
+        
+        //배송준비중 아닌(완료된) order의 isDone true로 변환
+        List<Order> doneOrderList = new ArrayList<>(orderRepository.findByMemberAndIsDoneFalse(member));
+        doneOrderList.removeAll(saveOrderList);
+        saveOrderList.removeAll(doneOrderList);
+        doneOrderList.forEach(o -> o.setDone());
+        
+        orderRepository.saveAll(saveOrderList); //새로 추가
+        orderRepository.saveAll(doneOrderList); //완료 된 것 상태변화
 
-        return new ResponseOrderUpdateDto(saveOrderList.stream().count());
+        return new ResponseOrderUpdateDto(saveOrderList.stream().count(), doneOrderList.stream().count());
     }
 
     private Integer calStartDate(Optional<Order> latestOrder) {

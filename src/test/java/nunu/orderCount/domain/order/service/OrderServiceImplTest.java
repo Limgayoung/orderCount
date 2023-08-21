@@ -17,6 +17,7 @@ import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagOrderService;
 import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,15 @@ class OrderServiceImplTest {
     @InjectMocks
     private OrderServiceImpl orderService;
 
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(
+                orderService,
+                "REDIS_ZIGZAG_TOKEN",
+                "zigzag-token: "
+        );
+    }
+
     @DisplayName("주문 업데이트")
     @Nested
     class orderUpdate {
@@ -90,7 +100,7 @@ class OrderServiceImplTest {
             ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
 
             //then
-            assertThat(response.getUpdateOrderCount()).isEqualTo(1L);
+            assertThat(response.getNewOrderCount()).isEqualTo(1L);
         }
 
         @DisplayName("성공 - 상품 존재하지 않을 경우")
@@ -122,7 +132,7 @@ class OrderServiceImplTest {
             ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
 
             //then
-            assertThat(response.getUpdateOrderCount()).isEqualTo(1L);
+            assertThat(response.getNewOrderCount()).isEqualTo(1L);
         }
 
         @DisplayName("성공 - 옵션 존재하지 않을 경우")
@@ -154,7 +164,7 @@ class OrderServiceImplTest {
             ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
 
             //then
-            assertThat(response.getUpdateOrderCount()).isEqualTo(1L);
+            assertThat(response.getNewOrderCount()).isEqualTo(1L);
         }
 
         @DisplayName("실패 - zigzag token 없음")
@@ -189,12 +199,36 @@ class OrderServiceImplTest {
             doReturn("zigzagToken").when(redisUtil).getData(anyString());
             // orderRepository 에서 last order 찾기
             doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
-            doReturn(null).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-            
+            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
+
             // zigzagOrderService 에서 주문 정보 받아오기 실패
             //when, then
             assertThatThrownBy(()->orderService.orderUpdate(dto))
                     .isInstanceOf(ZigzagRequestFailException.class);;
+        }
+
+        @DisplayName("zigzag response에 없는 order는 완료 처리한다.")
+        @Test
+        void orderUpdateSetIsDoneTest(){
+            //given
+            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
+            Member testMember = createTestMember("email", "password", 1L);
+            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
+            Option testOption = createTestOption("name", 2L, testProduct,1L);
+            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
+
+            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
+            doReturn("zigzagToken").when(redisUtil).getData(anyString());
+            // orderRepository 에서 last order 찾기
+            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
+            doReturn(List.of(testOrder)).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
+            // zigzagOrderService 에서 주문 정보 받아오기 실패
+            //when
+            ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
+
+            //then
+            assertThat(response.getChangeStatusOrderCount()).isEqualTo(1L);
         }
     }
 

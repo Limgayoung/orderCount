@@ -41,7 +41,7 @@ public class SecurityConfig {
         http
                 .httpBasic().disable()//문자열 Base64로 인코딩
                 .csrf().disable() //쿠키 기반 x -> 사용 x
-                .cors().configurationSource(corsConfigurationSource()).and()
+                .cors().and()
                 .formLogin().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) //세션 생성, 사용 x
                 .and()

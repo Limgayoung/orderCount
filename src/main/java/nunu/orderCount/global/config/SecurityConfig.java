@@ -20,6 +20,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.servlet.ServletException;
@@ -45,8 +46,8 @@ public class SecurityConfig {
                 .formLogin().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) //세션 생성, 사용 x
                 .and()
-
                 .authorizeRequests()
+                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 //swagger, test 관련 모든 권한 승인
                 .antMatchers(
                         "/swagger-ui/**", "/api-docs/**", "swagger-resources/**", "/api/test/**"
@@ -91,7 +92,9 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("*");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
+        configuration.addAllowedOriginPattern("*");
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(6000L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

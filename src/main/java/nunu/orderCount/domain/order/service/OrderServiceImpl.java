@@ -25,10 +25,8 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -59,6 +57,7 @@ public class OrderServiceImpl implements OrderService{
         Integer endDate = Integer.parseInt(String.valueOf(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
 
         List<ResponseZigzagOrderDto> zigzagOrderList = zigzagOrderService.zigzagOrderListRequester(zigzagToken, startDate, endDate);
+
         if (zigzagOrderList == null) {
             throw new ZigzagRequestFailException("zigzag 요청에 실패했습니다. zigzag token refresh가 필요합니다.");
         }
@@ -80,6 +79,7 @@ public class OrderServiceImpl implements OrderService{
                 option = Option.builder()
                         .name(zigzagOrder.getOption())
                         .product(product)
+                        .inventoryQuantity(0)
                         .build();
                 saveProductList.add(product);
                 saveOptionList.add(option);
@@ -91,6 +91,7 @@ public class OrderServiceImpl implements OrderService{
                     option = Option.builder()
                             .name(zigzagOrder.getOption())
                             .product(orderProduct.get())
+                            .inventoryQuantity(0)
                             .build();
                     saveOptionList.add(option);
                 }
@@ -105,27 +106,40 @@ public class OrderServiceImpl implements OrderService{
             Map<String, String> imageUrlMap = zigzagProductService.ZigzagProductImagesUrlRequester(zigzagToken, imageRequestList);
             saveProductList.forEach(p -> p.setImageUrl(imageUrlMap.get(p.getZigzagProductId())));
         }
-        productRepository.saveAll(saveProductList);
-        optionRepository.saveAll(saveOptionList);
+
+        List<Product> productList = saveProductList.stream().distinct().collect(Collectors.toList());
+
+        List<Option> optionList = saveOptionList.stream().distinct().collect(Collectors.toList());
+
+        productRepository.saveAll(productList);
+
+        //todo: optional.get() -> error throw 변경 필요
+        optionList.forEach(option -> option.setProduct(productRepository.findByZigzagProductId(option.getProduct().getZigzagProductId()).get()));
+
+        optionRepository.saveAll(optionList);
         
         //배송준비중 아닌(완료된) order의 isDone true로 변환
         List<Order> doneOrderList = new ArrayList<>(orderRepository.findByMemberAndIsDoneFalse(member));
-        doneOrderList.removeAll(saveOrderList);
-        saveOrderList.removeAll(doneOrderList);
+        List<Order> orderList = saveOrderList.stream().distinct().collect(Collectors.toList());
+        doneOrderList.removeAll(orderList);
+        orderList.removeAll(doneOrderList);
+
         doneOrderList.forEach(o -> o.setDone());
-        
-        orderRepository.saveAll(saveOrderList); //새로 추가
+
+        orderRepository.saveAll(orderList); //새로 추가
         orderRepository.saveAll(doneOrderList); //완료 된 것 상태변화
 
-        return new ResponseOrderUpdateDto(saveOrderList.stream().count(), doneOrderList.stream().count());
+        return new ResponseOrderUpdateDto(saveOrderList.size(), doneOrderList.size());
     }
 
     private Integer calStartDate(Optional<Order> latestOrder) {
         if(latestOrder.isPresent()) {
+            log.info("last order is present");
             return Integer.parseInt(String.valueOf(latestOrder.get().getDatePaid()));
         }
         else{
-            return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(2L)));
+            log.info("last order is null");
+            return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(1L).format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         }
     }
 }

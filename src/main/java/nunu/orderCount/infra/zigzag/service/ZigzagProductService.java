@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,9 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
     }
 
     public String ZigzagProductImageUrlRequester(String cookie, String productId){
-        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, Arrays.asList(productId));
+        long endTime = System.currentTimeMillis();
+
+        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, Arrays.asList(productId), endTime);
         String responseJson = post(PRODUCT_REQUEST_URI, cookie, requestZigzagProductInfoDto, String.class);
         return parseProductInfo(responseJson);
     }
@@ -43,7 +46,11 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
      * @return productId, imageUrl
      */
     public Map<String, String> ZigzagProductImagesUrlRequester(String cookie, List<String> productIdList){
-        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, productIdList);
+
+        long endTime = System.currentTimeMillis();
+        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, productIdList, endTime);
+        String.join(",", productIdList);
+
         String responseJson = post(PRODUCT_REQUEST_URI, cookie, requestZigzagProductInfoDto, String.class);
         return parseProductInfoList(responseJson);
     }

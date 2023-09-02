@@ -10,9 +10,9 @@ public class RequestZigzagProductInfoDto {
     private final String query;
     private final ProductVariables variables;
 
-    public RequestZigzagProductInfoDto(String query, List<String> productIdList) {
+    public RequestZigzagProductInfoDto(String query, List<String> productIdList, Long date_created_lte) {
         this.query = query;
-        this.variables = new ProductVariables(productIdList);
+        this.variables = new ProductVariables(productIdList, date_created_lte);
     }
 }
 
@@ -20,8 +20,8 @@ public class RequestZigzagProductInfoDto {
 class ProductVariables {
     private final ProductInput input;
 
-    public ProductVariables(List<String> productIdList) {
-        this.input = new ProductInput(productIdList);
+    public ProductVariables(List<String> productIdList, Long date_created_lte) {
+        this.input = new ProductInput(productIdList, date_created_lte);
     }
 }
 
@@ -46,7 +46,7 @@ class ProductInput{
     private final Long date_created_gte;
     private final Long date_created_lte;
 
-    public ProductInput(List<String> productIdList) {
+    public ProductInput(List<String> productIdList, Long date_created_lte) {
         this.display_status = null;
         this.product_type = null;
         this.entry_type = null;
@@ -64,6 +64,6 @@ class ProductInput{
         this.penalty_status_list = null;
         this.sales_status_list = Arrays.asList("ON_SALE");
         this.date_created_gte = 946652400000L;
-        this.date_created_lte = 1687618799999L;
+        this.date_created_lte = date_created_lte;
     }
 }

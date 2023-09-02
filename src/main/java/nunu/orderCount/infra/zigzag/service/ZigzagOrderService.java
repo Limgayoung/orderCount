@@ -34,8 +34,10 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         RequestZigzagOrderDto requestZigzagOrderDto = new RequestZigzagOrderDto(query, startDate, endDate);
         try {
             String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);
+            log.info("response: {}", responseJson);
             return parseOrderList(responseJson);
         } catch (ZigzagRequestApiException e) {
+            log.info("zigzag exception occurred!");
             return null;
         }
     }
@@ -46,6 +48,14 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         try {
 
             JSONObject jsonObj = (JSONObject) parser.parse(json);
+
+            try {
+                JSONArray errorsList = (JSONArray) jsonObj.get("errors");
+                JSONObject error = (JSONObject) errorsList.get(0);
+                String message = (String) error.get("message");
+                throw new ZigzagParsingException(message);
+            } catch (Exception e) {}
+
             JSONObject data = (JSONObject) jsonObj.get("data");
             JSONObject partnerOrderItemList = (JSONObject) data.get("partner_order_item_list");
             JSONArray itemList = (JSONArray) partnerOrderItemList.get("item_list");
@@ -76,7 +86,7 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                 responseList.add(responseZigzagOrderDto);
             }
         } catch (ParseException e) {
-            throw new ZigzagParsingException("zigzag 에서 주문 정보를 받아올 수 없습니다.");
+            throw new ZigzagParsingException("zigzag 에서 받아온 주문 정보를 파싱할 수 없습니다.");
         }
         return responseList;
     }

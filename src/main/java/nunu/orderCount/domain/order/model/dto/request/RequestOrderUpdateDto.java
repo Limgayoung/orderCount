@@ -6,12 +6,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
+
 @Schema(name = "주문 현황 업데이트 dto", description = "주문 현황 업데이트에 필요한 정보")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class RequestOrderUpdateDto {
-
     @Schema(description = "회원 id", example = "1L")
+    @NotNull
     private Long memberId;
 }

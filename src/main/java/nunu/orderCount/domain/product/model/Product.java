@@ -25,6 +25,7 @@ public class Product extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
     @NotNull
+    @Column(unique = true)
     private String zigzagProductId;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @NotNull

@@ -35,7 +35,7 @@ public class MemberController {
 
     @Operation(summary = "join API", description = "email과 password로 회원가입 진행")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "회원가입 성공")
+            @ApiResponse(responseCode = "S200", description = "회원가입 성공")
     })
     @PostMapping("/join")
     public ResponseEntity<Response> join(@RequestBody @Valid RequestJoinDto dto) {

@@ -16,6 +16,7 @@ import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseRefreshZigzagToken;
 import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
+import nunu.orderCount.global.config.RedisTestContainers;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
 import nunu.orderCount.global.util.RedisUtil;
@@ -41,7 +42,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @Slf4j
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, RedisTestContainers.class})
 class MemberServiceTest {
 
     @Mock

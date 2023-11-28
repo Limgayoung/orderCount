@@ -115,18 +115,19 @@ class OrderServiceImplTest {
 
             doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
             doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            // last order 존재하지 않을 경우
+            doReturn(Optional.empty()).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
 
             doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
 
-            doReturn(Optional.empty()).when(productRepository).findByZigzagProductId(anyString());
-            doReturn(Map.of("productId","imageurl")).when(zigzagProductService).ZigzagProductImagesUrlRequester(anyString(), anyList());
+            doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductId(anyString());
+//            doReturn(Map.of("productId","imageurl")).when(zigzagProductService).ZigzagProductImagesUrlRequester(anyString(), anyList());
 
             // order 저장
             doReturn(List.of(testProduct)).when(productRepository).saveAll(anyList());
             doReturn(List.of(testOption)).when(optionRepository).saveAll(anyList());
             doReturn(List.of(testOrder)).when(orderRepository).saveAll(anyList());
+            doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
 
             //when
             ResponseOrderUpdateDto response = orderService.orderUpdate(dto);

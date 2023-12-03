@@ -6,6 +6,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class MemberInfo {
-    private final Long memberId;
+    private final Member member;
     private final String zigzagToken;
 }

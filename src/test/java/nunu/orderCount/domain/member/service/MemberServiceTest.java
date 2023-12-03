@@ -293,7 +293,7 @@ class MemberServiceTest {
 
         MemberInfo memberInfo = memberService.createMemberInfo(1L);
 
-        assertThat(memberInfo.getMemberId()).isEqualTo(1L);
+        assertThat(memberInfo.getMember().getMemberId()).isEqualTo(1L);
     }
 
     private Member createTestMember(String email, String password, Long memberId){

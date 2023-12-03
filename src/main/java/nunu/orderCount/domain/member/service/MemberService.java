@@ -137,6 +137,6 @@ public class MemberService {
         if (zigzagToken.equals(null)) {
         }
 
-        return new MemberInfo(member.getMemberId(), zigzagToken);
+        return new MemberInfo(member, zigzagToken);
     }
 }

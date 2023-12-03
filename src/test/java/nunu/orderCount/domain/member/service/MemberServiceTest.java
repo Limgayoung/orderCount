@@ -6,6 +6,7 @@ import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.exception.NotExistMemberException;
 import nunu.orderCount.domain.member.exception.ZigzagLoginFailException;
 import nunu.orderCount.domain.member.model.Member;
+import nunu.orderCount.domain.member.model.MemberInfo;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
@@ -281,6 +282,20 @@ class MemberServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("회원 정보 생성")
+    void createMemberInfo(){
+        //given
+        Member testMember = createTestMember(email, password, 1L);
+
+        doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
+        doReturn("update" + zigzagToken).when(redisUtil).getData(anyString());
+
+        MemberInfo memberInfo = memberService.createMemberInfo(1L);
+
+        assertThat(memberInfo.getMemberId()).isEqualTo(1L);
+    }
+
     private Member createTestMember(String email, String password, Long memberId){
         Member testMember = Member.builder()
                 .email(email)
@@ -295,6 +310,5 @@ class MemberServiceTest {
         );
         return testMember;
     }
-
 
 }

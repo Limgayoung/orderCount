@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.exception.*;
 import nunu.orderCount.domain.member.model.Member;
+import nunu.orderCount.domain.member.model.MemberInfo;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestRefreshZigzagTokenDto;
@@ -125,5 +126,17 @@ public class MemberService {
         redisUtil.setData(REDIS_ZIGZAG_TOKEN + member.getMemberId(), zigzagToken, ZIGZAG_EXPIRE_TIME);
 
         return new ResponseRefreshZigzagToken("done");
+    }
+
+
+    public MemberInfo createMemberInfo(Long memberId){
+        Member member = memberRepository.findById(memberId).orElseThrow(() -> new NotExistMemberException("존재하지 않는 회원 id입니다."));
+        String zigzagToken = redisUtil.getData(REDIS_ZIGZAG_TOKEN + member.getMemberId());
+
+        //todo: null일 경우 validate
+        if (zigzagToken.equals(null)) {
+        }
+
+        return new MemberInfo(member.getMemberId(), zigzagToken);
     }
 }

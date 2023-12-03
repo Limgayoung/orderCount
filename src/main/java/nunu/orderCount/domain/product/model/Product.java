@@ -40,6 +40,7 @@ public class Product extends BaseEntity {
         this.member = member;
     }
 
+    //todo: setImageUrl 과 함께 삭제 예정
     @Builder
     public Product(String name, String zigzagProductId, Member member) {
         this.name = name;
@@ -50,16 +51,6 @@ public class Product extends BaseEntity {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
-
-    public Product createProduct(ResponseZigzagOrderDto dto, Member member) {
-        return Product.builder()
-                .name(dto.getProductName())
-                .imageUrl("")
-                .zigzagProductId(dto.getProductId())
-                .member(member)
-                .build();
-    }
-
 
     @Override
     public boolean equals(Object o) {

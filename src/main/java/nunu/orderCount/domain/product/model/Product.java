@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.global.common.BaseEntity;
+import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
@@ -48,6 +49,15 @@ public class Product extends BaseEntity {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Product createProduct(ResponseZigzagOrderDto dto, Member member) {
+        return Product.builder()
+                .name(dto.getProductName())
+                .imageUrl("")
+                .zigzagProductId(dto.getProductId())
+                .member(member)
+                .build();
     }
 
 

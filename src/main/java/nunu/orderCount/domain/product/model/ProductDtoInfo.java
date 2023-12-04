@@ -1,4 +1,4 @@
-package nunu.orderCount.domain.product.model.dto.request;
+package nunu.orderCount.domain.product.model;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

@@ -1,9 +1,7 @@
 package nunu.orderCount.domain.product.service;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.ArrayList;
@@ -11,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.MemberInfo;
-import nunu.orderCount.domain.product.model.dto.request.ProductDtoInfo;
+import nunu.orderCount.domain.product.model.ProductDtoInfo;
 import nunu.orderCount.domain.product.model.dto.request.RequestUpdateProductDto;
 import nunu.orderCount.domain.product.repository.ProductRepository;
 import nunu.orderCount.infra.zigzag.service.ZigzagProductService;

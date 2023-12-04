@@ -6,13 +6,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
-import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
-import nunu.orderCount.domain.order.exception.NotExistMemberException;
 import nunu.orderCount.domain.product.model.Product;
-import nunu.orderCount.domain.product.model.dto.request.ProductDtoInfo;
+import nunu.orderCount.domain.product.model.ProductDtoInfo;
 import nunu.orderCount.domain.product.model.dto.request.RequestUpdateProductDto;
 import nunu.orderCount.domain.product.repository.ProductRepository;
-import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
 import org.springframework.stereotype.Service;
 

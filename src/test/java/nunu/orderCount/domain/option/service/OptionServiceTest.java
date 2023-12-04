@@ -45,7 +45,8 @@ class OptionServiceTest {
         Product product = createProduct("1", memberInfo.getMember(), "product");
 
         //2. 이미 저장되어 있는 option 제거하기
-        doReturn(Optional.of(product)).when(productRepository).findByZigzagProductId(anyString());
+        doReturn(Optional.of(product)).when(productRepository)
+                .findByZigzagProductIdAndMember(anyString(), any(Member.class));
         doReturn(true).when(optionRepository).existsByProductAndName(any(Product.class), anyString());
         doReturn(List.of("1")).when(optionRepository).saveAll(anyList());
 

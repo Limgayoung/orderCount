@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.model.OptionDtoInfo;
 import nunu.orderCount.domain.option.model.dto.request.RequestCreateOptionsDto;
@@ -21,18 +22,16 @@ public class OptionService {
     private final ProductRepository productRepository;
 
     public void createOptions(RequestCreateOptionsDto dto) {
-        List<Option> options = extractUnsavedOptions(dto.getOptionDtoInfos());
+        List<Option> options = extractUnsavedOptions(dto.getOptionDtoInfos(), dto.getMemberInfo().getMember());
         optionRepository.saveAll(options);
     }
 
-    //todo: member로도 확인해줘야 하나? -> YES - product 관련 수정 필요, product.findBy~ 변경 필요
-    //todo: productRepository에서 zigzagProductId와 member 로 find 해줄것
-    private List<Option> extractUnsavedOptions(List<OptionDtoInfo> optionDtoInfos) {
+    private List<Option> extractUnsavedOptions(List<OptionDtoInfo> optionDtoInfos, Member member) {
         return optionDtoInfos.stream()
                 .distinct()
                 .filter(optionInfo -> {
-                    Optional<Product> product = productRepository.findByZigzagProductId(
-                            optionInfo.getZigzagProductId());
+                    Optional<Product> product = productRepository.findByZigzagProductIdAndMember(
+                            optionInfo.getZigzagProductId(), member);
                     if (product.isPresent()) {
                         return !optionRepository.existsByProductAndName(product.get(), optionInfo.getOptionName());
                     } else {
@@ -40,8 +39,8 @@ public class OptionService {
                     }
                 })
                 .map(optionDtoInfo -> {
-                    Product product = productRepository.findByZigzagProductId(
-                            optionDtoInfo.getZigzagProductId()).get();
+                    Product product = productRepository.findByZigzagProductIdAndMember(
+                            optionDtoInfo.getZigzagProductId(), member).get();
                     return Option.builder()
                             .name(optionDtoInfo.getOptionName())
                             .product(product)

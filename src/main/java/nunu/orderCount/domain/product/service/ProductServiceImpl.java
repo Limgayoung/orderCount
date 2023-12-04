@@ -28,7 +28,9 @@ public class ProductServiceImpl implements ProductService{
     public void updateProduct(RequestUpdateProductDto dto) {
         //1. 저장되지 않은 product 찾기
         List<ProductDtoInfo> productDtoInfos = dto.getProductInfos().stream()
-                .filter(productInfo -> !productRepository.existsByZigzagProductId(productInfo.getZigzagProductId()))
+                .distinct()
+                .filter(productInfo -> !productRepository.existsByZigzagProductIdAndMember(
+                        productInfo.getZigzagProductId(), dto.getMemberInfo().getMember()))
                 .collect(Collectors.toList());
 
         List<String> zigzagProductIds = productDtoInfos.stream().map(ProductDtoInfo::getZigzagProductId)

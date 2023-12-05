@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.option.model.Option;
-import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.global.common.BaseEntity;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 
@@ -25,6 +24,7 @@ public class Order extends BaseEntity {
     @NotNull
     private Long quantity; //주문 수량
     @NotNull
+    @Column(unique = true)
     private String orderItemNumber; //상품 주문 번호
     @NotNull
     private String orderNumber; //주문 번호

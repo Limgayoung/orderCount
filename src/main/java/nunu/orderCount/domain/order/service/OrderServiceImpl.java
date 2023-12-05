@@ -63,7 +63,17 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public ResponseOrderUpdateDto orderUpdate(RequestOrderUpdateDto dto) {
+        //새로 저장할 order list 뽑기 -> orderRepository에 저장되어 있지 않은 order list
+        List<Order> newOrders = extractNewOrders(dto.getOrderDtoInfos(), dto.getMemberInfo());
+
+        //완료된 order 상태 변환 -> orderRepository에는 isDone false, order list에는 존재하지 않음 -> true로 변경 필요
+
+
 //        //배송준비중 아닌(완료된) order의 isDone true로 변환
+//        dto.getOrderDtoInfos().stream()
+//                .filter(orderDtoInfo -> {
+//                    orderRepository.
+//                })
 //        List<Order> doneOrderList = new ArrayList<>(orderRepository.findByMemberAndIsDoneFalse(member));
 //        List<Order> orderList = saveOrderList.stream().distinct().collect(Collectors.toList());
 //        doneOrderList.removeAll(orderList);
@@ -75,7 +85,35 @@ public class OrderServiceImpl implements OrderService{
 //        orderRepository.saveAll(doneOrderList); //완료 된 것 상태변화
 //
 //        return new ResponseOrderUpdateDto(saveOrderList.size(), doneOrderList.size());
-        return null;
+        return new ResponseOrderUpdateDto(newOrders.size(), 0);
+    }
+
+    private List<Order> extractNewOrders(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
+        return orderDtoInfos.stream()
+                .filter(orderDtoInfo -> {
+                    Optional<Product> product = productRepository.findByZigzagProductIdAndMember(
+                            orderDtoInfo.getProductId(), memberInfo.getMember());
+                    if(product.isEmpty()) return false;
+                    if(!optionRepository.existsByProductAndName(product.get(), orderDtoInfo.getOptionName())) return false;
+                    return !orderRepository.existsByMemberAndOrderItemNumber(memberInfo.getMember(),
+                            orderDtoInfo.getOrderItemNumber());
+                })
+                .map(o -> {
+                    Product product = productRepository.findByZigzagProductIdAndMember(
+                            o.getProductId(), memberInfo.getMember()).get();
+
+                    Option option = optionRepository.findByProductAndName(product, o.getOptionName()).get();
+
+                    return Order.builder()
+                            .orderNumber(o.getOrderNumber())
+                            .orderItemNumber(o.getOrderItemNumber())
+                            .datePaid(o.getDatePaid())
+                            .quantity(o.getQuantity())
+                            .member(memberInfo.getMember())
+                            .option(option)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 
     private Integer calStartDate(Optional<Order> latestOrder) {

@@ -8,6 +8,9 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.model.Order;
+import nunu.orderCount.domain.order.model.OrderDtoInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.domain.product.repository.ProductRepository;
@@ -82,6 +85,25 @@ class OrderServiceImplTest {
         }
     }
 
+    @Test
+    @DisplayName("order update")
+    void orderUpdate(){
+        MemberInfo memberInfo = createMemberInfo();
+        Product testProduct = createTestProduct(memberInfo.getMember());
+        Option testOption = createTestOption(testProduct);
+
+        doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductIdAndMember(anyString(), any(Member.class));
+        doReturn(false).when(orderRepository).existsByMemberAndOrderItemNumber(any(Member.class), anyString());
+        doReturn(true).when(optionRepository).existsByProductAndName(any(Product.class), anyString());
+        doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
+
+        List<OrderDtoInfo> dto = createOrderDtoInfo(5, 20231205L);
+        ResponseOrderUpdateDto response = orderService.orderUpdate(
+                new RequestOrderUpdateDto(memberInfo, dto));
+        
+        assertThat(response.getNewOrderCount()).isEqualTo(5);
+    }
+
     private MemberInfo createMemberInfo(){
         return new MemberInfo(new Member("email", "password"), "token");
     }
@@ -94,6 +116,16 @@ class OrderServiceImplTest {
                             "orderNum" + i, "" + i, Long.valueOf(i)));
         }
         return responseZigzagOrders;
+    }
+
+    private List<OrderDtoInfo> createOrderDtoInfo(int size, Long date){
+        List<OrderDtoInfo> orderDtoInfos = new ArrayList<>();
+        String num ="";
+        for(int i=1;i<=size;i++){
+            num+=i;
+            orderDtoInfos.add(new OrderDtoInfo(Long.valueOf(i), num, num, date, num, "option" + i));
+        }
+        return orderDtoInfos;
     }
 
     private Order createTestOrder(long datePaid, Option option){

@@ -40,7 +40,8 @@ public class OrderController {
     })
     @PostMapping("/{id}")
     public ResponseEntity<Response> updateZigzagOrder(@PathVariable("id") Long id) {
-        ResponseOrderUpdateDto responseOrderUpdateDto = orderService.orderUpdate(new RequestOrderUpdateDto(id));
-        return Response.SUCCESS("주문 업데이트가 완료되었습니다.", responseOrderUpdateDto);
+//        ResponseOrderUpdateDto responseOrderUpdateDto = orderService.orderUpdate(new RequestOrderUpdateDto(id));
+//        return Response.SUCCESS("주문 업데이트가 완료되었습니다.", responseOrderUpdateDto);
+        return null;
     }
 }

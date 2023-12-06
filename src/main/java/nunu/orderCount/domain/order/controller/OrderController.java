@@ -6,16 +6,29 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nunu.orderCount.domain.member.model.MemberInfo;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
+import nunu.orderCount.domain.member.service.MemberService;
+import nunu.orderCount.domain.option.model.OptionDtoInfo;
+import nunu.orderCount.domain.option.model.dto.request.RequestCreateOptionsDto;
+import nunu.orderCount.domain.option.service.OptionService;
+import nunu.orderCount.domain.order.model.OrderDtoInfo;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.service.OrderServiceImpl;
+import nunu.orderCount.domain.product.model.ProductDtoInfo;
+import nunu.orderCount.domain.product.model.dto.request.RequestUpdateProductDto;
+import nunu.orderCount.domain.product.service.ProductService;
+import nunu.orderCount.domain.product.service.ProductServiceImpl;
 import nunu.orderCount.global.error.ErrorResponse;
 import nunu.orderCount.global.response.Response;
+import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +42,9 @@ import javax.validation.Valid;
 public class OrderController {
 
     private final OrderServiceImpl orderService;
+    private final MemberService memberService;
+    private final ProductServiceImpl productService;
+    private final OptionService optionService;
 
     @Operation(summary = "주문 업데이트 API", description = "회원 id로 주문 업데이트 진행")
     @ApiResponses(value = {
@@ -40,8 +56,39 @@ public class OrderController {
     })
     @PostMapping("/{id}")
     public ResponseEntity<Response> updateZigzagOrder(@PathVariable("id") Long id) {
-//        ResponseOrderUpdateDto responseOrderUpdateDto = orderService.orderUpdate(new RequestOrderUpdateDto(id));
-//        return Response.SUCCESS("주문 업데이트가 완료되었습니다.", responseOrderUpdateDto);
-        return null;
+        MemberInfo memberInfo = memberService.createMemberInfo(id);
+        List<ResponseZigzagOrderDto> ordersFromZigzag = orderService.getOrdersFromZigzag(memberInfo);
+        updateProduct(ordersFromZigzag, memberInfo);
+        updateOption(ordersFromZigzag, memberInfo);
+        ResponseOrderUpdateDto response = updateOrder(ordersFromZigzag, memberInfo);
+        return Response.SUCCESS("주문 업데이트가 완료되었습니다.", response);
+    }
+
+    private void updateProduct(List<ResponseZigzagOrderDto> ordersFromZigzag, MemberInfo memberInfo){
+        List<ProductDtoInfo> productDtoInfos = ordersFromZigzag.stream()
+                .map(o -> {
+                    return new ProductDtoInfo(o.getProductName(), o.getProductId());
+                })
+                .collect(Collectors.toList());
+        productService.updateProduct(new RequestUpdateProductDto(memberInfo,productDtoInfos));
+    }
+
+    private void updateOption(List<ResponseZigzagOrderDto> ordersFromZigzag, MemberInfo memberInfo){
+        List<OptionDtoInfo> optionDtoInfos = ordersFromZigzag.stream()
+                .map(o -> {
+                    return new OptionDtoInfo(o.getOption(), o.getProductId());
+                })
+                .collect(Collectors.toList());
+        optionService.createOptions(new RequestCreateOptionsDto(memberInfo, optionDtoInfos));
+    }
+    
+    private ResponseOrderUpdateDto updateOrder(List<ResponseZigzagOrderDto> ordersFromZigzag, MemberInfo memberInfo){
+        List<OrderDtoInfo> orderDtoInfos = ordersFromZigzag.stream()
+                .map(o ->
+                        new OrderDtoInfo(o.getQuantity(), o.getOrderItemNumber(), o.getOrderNumber(),
+                                o.getDatePaid(), o.getProductId(), o.getOption())
+                )
+                .collect(Collectors.toList());
+        return orderService.orderUpdate(new RequestOrderUpdateDto(memberInfo, orderDtoInfos));
     }
 }

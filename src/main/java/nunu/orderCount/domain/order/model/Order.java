@@ -52,17 +52,6 @@ public class Order extends BaseEntity {
         this.isDone = false;
     }
 
-    public static Order of(ResponseZigzagOrderDto dto, Member member, Option option) {
-        return Order.builder()
-                .orderItemNumber(dto.getOrderItemNumber())
-                .orderNumber(dto.getOrderNumber())
-                .option(option)
-                .member(member)
-                .quantity(dto.getQuantity())
-                .datePaid(dto.getDatePaid())
-                .build();
-    }
-
     public void setDone() {
         isDone = true;
     }
@@ -71,7 +60,7 @@ public class Order extends BaseEntity {
         this.option = option;
     }
 
-    @Override
+        @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -91,6 +80,7 @@ public class Order extends BaseEntity {
     @Override
     public int hashCode() {
         int result = orderId != null ? orderId.hashCode() : 0;
+//        int result = quantity != null ? quantity.hashCode() : 0;
         result = 31 * result + (quantity != null ? quantity.hashCode() : 0);
         result = 31 * result + (orderItemNumber != null ? orderItemNumber.hashCode() : 0);
         result = 31 * result + (orderNumber != null ? orderNumber.hashCode() : 0);

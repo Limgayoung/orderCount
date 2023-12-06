@@ -63,56 +63,53 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public ResponseOrderUpdateDto orderUpdate(RequestOrderUpdateDto dto) {
+        //배송준비중인 order list 만들기
+        List<Order> orders = makeOrderList(dto.getOrderDtoInfos(), dto.getMemberInfo());
+
         //새로 저장할 order list 뽑기 -> orderRepository에 저장되어 있지 않은 order list
-        List<Order> newOrders = extractNewOrders(dto.getOrderDtoInfos(), dto.getMemberInfo());
+        List<Order> newOrders = extractNewOrders(orders, dto.getMemberInfo().getMember());
 
-        //완료된 order 상태 변환 -> orderRepository에는 isDone false, order list에는 존재하지 않음 -> true로 변경 필요
+        //완료된 order 상태 변환
+        List<Order> doneOrders = new ArrayList<>(orderRepository.findByMemberAndIsDoneFalse(
+                dto.getMemberInfo().getMember()));
+        doneOrders.removeAll(orders);
 
+        doneOrders.stream().forEach(order -> {
+            order.setDone();
+        });
 
-//        //배송준비중 아닌(완료된) order의 isDone true로 변환
-//        dto.getOrderDtoInfos().stream()
-//                .filter(orderDtoInfo -> {
-//                    orderRepository.
-//                })
-//        List<Order> doneOrderList = new ArrayList<>(orderRepository.findByMemberAndIsDoneFalse(member));
-//        List<Order> orderList = saveOrderList.stream().distinct().collect(Collectors.toList());
-//        doneOrderList.removeAll(orderList);
-//        orderList.removeAll(doneOrderList);
-//
-//        doneOrderList.forEach(o -> o.setDone());
-//
-//        orderRepository.saveAll(orderList); //새로 추가
-//        orderRepository.saveAll(doneOrderList); //완료 된 것 상태변화
-//
-//        return new ResponseOrderUpdateDto(saveOrderList.size(), doneOrderList.size());
-        return new ResponseOrderUpdateDto(newOrders.size(), 0);
+        orderRepository.saveAll(newOrders);
+        orderRepository.saveAll(doneOrders);
+        return new ResponseOrderUpdateDto(newOrders.size(), doneOrders.size());
     }
 
-    private List<Order> extractNewOrders(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
+    private List<Order> makeOrderList(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
         return orderDtoInfos.stream()
-                .filter(orderDtoInfo -> {
+                .distinct()
+                .map(orderDtoInfo -> {
                     Optional<Product> product = productRepository.findByZigzagProductIdAndMember(
                             orderDtoInfo.getProductId(), memberInfo.getMember());
-                    if(product.isEmpty()) return false;
-                    if(!optionRepository.existsByProductAndName(product.get(), orderDtoInfo.getOptionName())) return false;
-                    return !orderRepository.existsByMemberAndOrderItemNumber(memberInfo.getMember(),
-                            orderDtoInfo.getOrderItemNumber());
-                })
-                .map(o -> {
-                    Product product = productRepository.findByZigzagProductIdAndMember(
-                            o.getProductId(), memberInfo.getMember()).get();
-
-                    Option option = optionRepository.findByProductAndName(product, o.getOptionName()).get();
+                    if (product.isEmpty()) return null;
+                    Optional<Option> option = optionRepository.findByProductAndName(product.get(),
+                            orderDtoInfo.getOptionName());
+                    if (option.isEmpty()) return null;
 
                     return Order.builder()
-                            .orderNumber(o.getOrderNumber())
-                            .orderItemNumber(o.getOrderItemNumber())
-                            .datePaid(o.getDatePaid())
-                            .quantity(o.getQuantity())
+                            .option(option.get())
+                            .datePaid(orderDtoInfo.getDatePaid())
                             .member(memberInfo.getMember())
-                            .option(option)
+                            .orderNumber(orderDtoInfo.getOrderNumber())
+                            .orderItemNumber(orderDtoInfo.getOrderItemNumber())
+                            .quantity(orderDtoInfo.getQuantity())
                             .build();
                 })
+                .filter(o -> o != null)
+                .collect(Collectors.toList());
+    }
+
+    private List<Order> extractNewOrders(List<Order> orders, Member member){
+        return orders.stream()
+                .filter(order -> !orderRepository.existsByMemberAndOrderItemNumber(member, order.getOrderItemNumber()))
                 .collect(Collectors.toList());
     }
 

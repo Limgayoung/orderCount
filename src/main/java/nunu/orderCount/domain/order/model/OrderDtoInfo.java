@@ -22,5 +22,4 @@ public class OrderDtoInfo {
     private String productId;
     @NotNull
     private String optionName;
-
 }

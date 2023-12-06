@@ -91,17 +91,22 @@ class OrderServiceImplTest {
         MemberInfo memberInfo = createMemberInfo();
         Product testProduct = createTestProduct(memberInfo.getMember());
         Option testOption = createTestOption(testProduct);
-
+        Order testOrder = createTestOrder(20231206L, testOption);
         doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductIdAndMember(anyString(), any(Member.class));
         doReturn(false).when(orderRepository).existsByMemberAndOrderItemNumber(any(Member.class), anyString());
-        doReturn(true).when(optionRepository).existsByProductAndName(any(Product.class), anyString());
         doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
+        doReturn(List.of(testOrder)).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
+        doReturn(List.of(1)).when(orderRepository).saveAll(anyList());
 
         List<OrderDtoInfo> dto = createOrderDtoInfo(5, 20231205L);
+
+        dto.add(new OrderDtoInfo(testOrder.getQuantity(), testOrder.getOrderItemNumber(), testOrder.getOrderNumber(),
+                testOrder.getDatePaid(), testProduct.getZigzagProductId(), testOption.getName()));
         ResponseOrderUpdateDto response = orderService.orderUpdate(
                 new RequestOrderUpdateDto(memberInfo, dto));
-        
-        assertThat(response.getNewOrderCount()).isEqualTo(5);
+
+        assertThat(response.getNewOrderCount()).isEqualTo(6);
+        assertThat(response.getChangeStatusOrderCount()).isEqualTo(1);
     }
 
     private MemberInfo createMemberInfo(){
@@ -155,21 +160,21 @@ class OrderServiceImplTest {
                 .build();
     }
 
-    private Order createTestOrder(String itemNumber, Long datePaid, String orderNumber, Member member, Long quantity, Option option, Long orderId){
+    private Order createTestOrder(Long datePaid, Member member, Option option, Long orderId){
         Order testOrder = Order.builder()
-                .orderItemNumber(itemNumber)
+                .orderItemNumber("1")
                 .datePaid(datePaid)
-                .orderNumber(orderNumber)
+                .orderNumber("1")
                 .member(member)
                 .option(option)
-                .quantity(quantity)
+                .quantity(2L)
                 .build();
-        ReflectionTestUtils.setField(
-                testOrder,
-                "orderId",
-                orderId,
-                Long.class
-        );
+//        ReflectionTestUtils.setField(
+//                testOrder,
+//                "orderId",
+//                orderId,
+//                Long.class
+//        );
         return testOrder;
     }
     private Member createTestMember(String email, String password, Long memberId){

@@ -69,7 +69,10 @@ public class OrderController {
                 .map(o -> {
                     return new ProductDtoInfo(o.getProductName(), o.getProductId());
                 })
+                .distinct()
                 .collect(Collectors.toList());
+        productDtoInfos.forEach(productDtoInfo -> log.info("product: {} {}",productDtoInfo.getProductName(), productDtoInfo.getZigzagProductId()));
+
         productService.updateProduct(new RequestUpdateProductDto(memberInfo,productDtoInfos));
     }
 
@@ -78,6 +81,7 @@ public class OrderController {
                 .map(o -> {
                     return new OptionDtoInfo(o.getOption(), o.getProductId());
                 })
+                .distinct()
                 .collect(Collectors.toList());
         optionService.createOptions(new RequestCreateOptionsDto(memberInfo, optionDtoInfos));
     }
@@ -88,6 +92,7 @@ public class OrderController {
                         new OrderDtoInfo(o.getQuantity(), o.getOrderItemNumber(), o.getOrderNumber(),
                                 o.getDatePaid(), o.getProductId(), o.getOption())
                 )
+                .distinct()
                 .collect(Collectors.toList());
         return orderService.orderUpdate(new RequestOrderUpdateDto(memberInfo, orderDtoInfos));
     }

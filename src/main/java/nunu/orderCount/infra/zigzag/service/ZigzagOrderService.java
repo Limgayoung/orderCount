@@ -58,6 +58,7 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
 
             JSONObject data = (JSONObject) jsonObj.get("data");
             JSONObject partnerOrderItemList = (JSONObject) data.get("partner_order_item_list");
+//            int totalCount = (Integer) partnerOrderItemList.get("total_count");
             JSONArray itemList = (JSONArray) partnerOrderItemList.get("item_list");
 
             for(int i=0;i<itemList.size();i++){

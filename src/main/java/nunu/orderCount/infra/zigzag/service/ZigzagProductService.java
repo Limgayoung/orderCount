@@ -33,9 +33,8 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
     }
 
     public String ZigzagProductImageUrlRequester(String cookie, String productId){
-        long endTime = System.currentTimeMillis();
-
-        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, Arrays.asList(productId), endTime);
+//        long endTime = System.currentTimeMillis();
+        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, Arrays.asList(productId));
         String responseJson = post(PRODUCT_REQUEST_URI, cookie, requestZigzagProductInfoDto, String.class);
         return parseProductInfo(responseJson);
     }
@@ -48,7 +47,7 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
     public Map<String, String> ZigzagProductImagesUrlRequester(String cookie, List<String> productIdList){
 
         long endTime = System.currentTimeMillis();
-        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, productIdList, endTime);
+        RequestZigzagProductInfoDto requestZigzagProductInfoDto = new RequestZigzagProductInfoDto(query, productIdList);
         String.join(",", productIdList);
 
         String responseJson = post(PRODUCT_REQUEST_URI, cookie, requestZigzagProductInfoDto, String.class);
@@ -92,9 +91,9 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
 
             JSONObject jsonObj = (JSONObject) parser.parse(json);
             JSONObject data = (JSONObject) jsonObj.get("data");
-            JSONObject catalogProductList = (JSONObject) data.get("catalog_product_list");
-            long totalCount = (long) catalogProductList.get("total_count");
-            JSONArray productList = (JSONArray) catalogProductList.get("product_list");
+            JSONObject cachedProductList = (JSONObject) data.get("cached_product_list");
+//            long totalCount = (long) catalogProductList.get("total_count");
+            JSONArray productList = (JSONArray) cachedProductList.get("product_list");
 
             for(int i=0;i<productList.size();i++){
                 JSONObject productInfo = (JSONObject) productList.get(i);

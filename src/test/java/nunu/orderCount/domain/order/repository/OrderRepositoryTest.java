@@ -74,6 +74,20 @@ class OrderRepositoryTest {
         //then
         assertThat(latestOrder.get().getMember()).isEqualTo(testMember);
     }
+
+    @DisplayName("주문 없을 때 최근 주문 조회")
+    @Test
+    void findTopByMemberOrderByDatePaidDescWhenNotOrderTest(){
+        //given
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        //when
+        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(testMember);
+
+        //then
+        assertThat(latestOrder).isEqualTo(Optional.empty());
+    }
+
     private Member createTestMember(String email, String password){
         Member testMember = Member.builder()
                 .email(email)

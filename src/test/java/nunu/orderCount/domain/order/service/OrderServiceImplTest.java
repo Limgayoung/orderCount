@@ -1,23 +1,21 @@
 package nunu.orderCount.domain.order.service;
 
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
+import nunu.orderCount.domain.member.model.MemberInfo;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
-import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
-import nunu.orderCount.domain.order.exception.ZigzagRequestFailException;
 import nunu.orderCount.domain.order.model.Order;
+import nunu.orderCount.domain.order.model.OrderDtoInfo;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.domain.product.repository.ProductRepository;
-import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagOrderService;
-import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,8 +38,6 @@ import static org.mockito.Mockito.doReturn;
 class OrderServiceImplTest {
 
     @Mock
-    private RedisUtil redisUtil;
-    @Mock
     private OrderRepository orderRepository;
     @Mock
     private MemberRepository memberRepository;
@@ -51,202 +47,134 @@ class OrderServiceImplTest {
     private OptionRepository optionRepository;
     @Mock
     private ZigzagOrderService zigzagOrderService;
-    @Mock
-    private ZigzagProductService zigzagProductService;
 
     @InjectMocks
     private OrderServiceImpl orderService;
 
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(
-                orderService,
-                "REDIS_ZIGZAG_TOKEN",
-                "zigzag-token: "
-        );
-    }
-
-    @DisplayName("주문 업데이트")
+    @DisplayName("zigzag에서 주문 정보 받아오기")
     @Nested
-    class orderUpdate {
-        @DisplayName("성공 - 모든 상품, 옵션 존재할 경우")
+    class getOrdersFromZigzag{
         @Test
-        void orderUpdateTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
+        @DisplayName("마지막 주문 정보 없을 경우")
+        void notExistLastOrder(){
+            MemberInfo memberInfo = createMemberInfo();
+            doReturn(Optional.empty()).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            List<ResponseZigzagOrderDto> responseZigzagOrderDtos = createResponseZigzagOrderDto(5);
+            doReturn(responseZigzagOrderDtos).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
 
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            orderService.getOrdersFromZigzag(memberInfo);
 
-            // zigzagOrderService 에서 주문 정보 받아오기
-            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-                //실패 시 예외 throw -> 프론트에서 비밀번호 입력해서 zigzag login 요청 후 재요청
-            // list의 각 원소가 option에 이미 있는지 확인, 없으면 저장
-            doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductId(anyString());
-            doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
-
-            // order 저장
-            doReturn(List.of(testProduct)).when(productRepository).saveAll(anyList());
-            doReturn(List.of(testOption)).when(optionRepository).saveAll(anyList());
-            doReturn(List.of(testOrder)).when(orderRepository).saveAll(anyList());
-
-            //when
-            ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
-
-            //then
-            assertThat(response.getNewOrderCount()).isEqualTo(1L);
+            assertThat(responseZigzagOrderDtos.size()).isEqualTo(5);
         }
 
-        @DisplayName("성공 - 상품 존재하지 않을 경우")
         @Test
-        void orderUpdateNotExistProductTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
+        @DisplayName("마지막 주문 정보 있을 경우")
+        void existLastOrder(){
+            MemberInfo memberInfo = createMemberInfo();
+            Product testProduct = createTestProduct(memberInfo.getMember());
+            Option testOption = createTestOption(testProduct);
+            Order testOrder = createTestOrder(20231205L, testOption);
+            doReturn(Optional.of(testOrder)).when(orderRepository)
+                    .findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            List<ResponseZigzagOrderDto> responseZigzagOrderDtos = createResponseZigzagOrderDto(5);
+            doReturn(responseZigzagOrderDtos).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
 
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            orderService.getOrdersFromZigzag(memberInfo);
 
-            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-
-            doReturn(Optional.empty()).when(productRepository).findByZigzagProductId(anyString());
-            doReturn(Map.of("productId","imageurl")).when(zigzagProductService).ZigzagProductImagesUrlRequester(anyString(), anyList());
-
-            // order 저장
-            doReturn(List.of(testProduct)).when(productRepository).saveAll(anyList());
-            doReturn(List.of(testOption)).when(optionRepository).saveAll(anyList());
-            doReturn(List.of(testOrder)).when(orderRepository).saveAll(anyList());
-
-            //when
-            ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
-
-            //then
-            assertThat(response.getNewOrderCount()).isEqualTo(1L);
-        }
-
-        @DisplayName("성공 - 옵션 존재하지 않을 경우")
-        @Test
-        void orderUpdateNotExistOptionTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
-
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
-
-            // zigzagOrderService 에서 주문 정보 받아오기
-            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-            doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductId(anyString());
-            doReturn(Optional.empty()).when(optionRepository).findByProductAndName(any(Product.class), anyString());
-
-            // order 저장
-            doReturn(List.of(testProduct)).when(productRepository).saveAll(anyList());
-            doReturn(List.of(testOption)).when(optionRepository).saveAll(anyList());
-            doReturn(List.of(testOrder)).when(orderRepository).saveAll(anyList());
-
-            //when
-            ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
-
-            //then
-            assertThat(response.getNewOrderCount()).isEqualTo(1L);
-        }
-
-        @DisplayName("실패 - zigzag token 없음")
-        @Test
-        void orderUpdateFailNullOfZigzagTokenTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
-
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn(null).when(redisUtil).getData(anyString());
-
-            //when, then
-            assertThatThrownBy(()->orderService.orderUpdate(dto))
-                    .isInstanceOf(InvalidZigzagTokenException.class);;
-        }
-
-        @DisplayName("실패 - zigzag order request 실패")
-        @Test
-        void orderUpdateFailRequestZigzagOrderTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
-
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
-            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-
-            // zigzagOrderService 에서 주문 정보 받아오기 실패
-            //when, then
-            assertThatThrownBy(()->orderService.orderUpdate(dto))
-                    .isInstanceOf(ZigzagRequestFailException.class);;
-        }
-
-        @DisplayName("zigzag response에 없는 order는 완료 처리한다.")
-        @Test
-        void orderUpdateSetIsDoneTest(){
-            //given
-            RequestOrderUpdateDto dto = new RequestOrderUpdateDto(1L);
-            Member testMember = createTestMember("email", "password", 1L);
-            Product testProduct = createTestProduct("pro", "option", "imageurl",  1L, testMember);
-            Option testOption = createTestOption("name", 2L, testProduct,1L);
-            Order testOrder = createTestOrder("itemNumber", 20230811L, "orderNumber", testMember, 2L, testOption, 1L);
-
-            doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
-            doReturn("zigzagToken").when(redisUtil).getData(anyString());
-            // orderRepository 에서 last order 찾기
-            doReturn(Optional.of(testOrder)).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
-            doReturn(List.of(new ResponseZigzagOrderDto("","",2L,"","","",20230811L))).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
-            doReturn(List.of(testOrder)).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
-            // zigzagOrderService 에서 주문 정보 받아오기 실패
-            //when
-            ResponseOrderUpdateDto response = orderService.orderUpdate(dto);
-
-            //then
-            assertThat(response.getChangeStatusOrderCount()).isEqualTo(1L);
+            assertThat(responseZigzagOrderDtos.size()).isEqualTo(5);
         }
     }
 
-    private Order createTestOrder(String itemNumber, Long datePaid, String orderNumber, Member member, Long quantity, Option option, Long orderId){
-        Order testOrder = Order.builder()
-                .orderItemNumber(itemNumber)
+    @Test
+    @DisplayName("order update")
+    void orderUpdate(){
+        MemberInfo memberInfo = createMemberInfo();
+        Product testProduct = createTestProduct(memberInfo.getMember());
+        Option testOption = createTestOption(testProduct);
+        Order testOrder = createTestOrder(20231206L, testOption);
+        doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductIdAndMember(anyString(), any(Member.class));
+        doReturn(false).when(orderRepository).existsByMemberAndOrderItemNumber(any(Member.class), anyString());
+        doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
+        doReturn(List.of(testOrder)).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
+        doReturn(List.of(1)).when(orderRepository).saveAll(anyList());
+
+        List<OrderDtoInfo> dto = createOrderDtoInfo(5, 20231205L);
+
+        dto.add(new OrderDtoInfo(testOrder.getQuantity(), testOrder.getOrderItemNumber(), testOrder.getOrderNumber(),
+                testOrder.getDatePaid(), testProduct.getZigzagProductId(), testOption.getName()));
+        ResponseOrderUpdateDto response = orderService.orderUpdate(
+                new RequestOrderUpdateDto(memberInfo, dto));
+
+        assertThat(response.getNewOrderCount()).isEqualTo(6);
+        assertThat(response.getChangeStatusOrderCount()).isEqualTo(1);
+    }
+
+    private MemberInfo createMemberInfo(){
+        return new MemberInfo(new Member("email", "password"), "token");
+    }
+
+    private List<ResponseZigzagOrderDto> createResponseZigzagOrderDto(int size){
+        List<ResponseZigzagOrderDto> responseZigzagOrders = new ArrayList<>();
+        for(int i=1;i<=size;i++){
+            responseZigzagOrders.add(
+                    new ResponseZigzagOrderDto("product" + i, "option" + i, Long.valueOf(i), "itemNum" + i,
+                            "orderNum" + i, "" + i, Long.valueOf(i)));
+        }
+        return responseZigzagOrders;
+    }
+
+    private List<OrderDtoInfo> createOrderDtoInfo(int size, Long date){
+        List<OrderDtoInfo> orderDtoInfos = new ArrayList<>();
+        String num ="";
+        for(int i=1;i<=size;i++){
+            num+=i;
+            orderDtoInfos.add(new OrderDtoInfo(Long.valueOf(i), num, num, date, num, "option" + i));
+        }
+        return orderDtoInfos;
+    }
+
+    private Order createTestOrder(long datePaid, Option option){
+        return Order.builder()
                 .datePaid(datePaid)
-                .orderNumber(orderNumber)
+                .orderNumber("1")
+                .quantity(1L)
+                .orderItemNumber("1")
+                .option(option)
+                .build();
+    }
+
+    private Option createTestOption(Product product){
+        return Option.builder()
+                .product(product)
+                .name("option")
+                .inventoryQuantity(1)
+                .build();
+    }
+
+    private Product createTestProduct(Member member) {
+        return Product.builder()
+                .member(member)
+                .zigzagProductId("1")
+                .name("product")
+                .imageUrl("")
+                .build();
+    }
+
+    private Order createTestOrder(Long datePaid, Member member, Option option, Long orderId){
+        Order testOrder = Order.builder()
+                .orderItemNumber("1")
+                .datePaid(datePaid)
+                .orderNumber("1")
                 .member(member)
                 .option(option)
-                .quantity(quantity)
+                .quantity(2L)
                 .build();
-        ReflectionTestUtils.setField(
-                testOrder,
-                "orderId",
-                orderId,
-                Long.class
-        );
+//        ReflectionTestUtils.setField(
+//                testOrder,
+//                "orderId",
+//                orderId,
+//                Long.class
+//        );
         return testOrder;
     }
     private Member createTestMember(String email, String password, Long memberId){

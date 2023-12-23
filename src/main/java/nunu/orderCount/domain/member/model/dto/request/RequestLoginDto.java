@@ -16,6 +16,7 @@ import javax.validation.constraints.NotEmpty;
 public class RequestLoginDto {
     @Email(message = "올바르지 않은 이메일 형식입니다")
     @Schema(description = "이메일", example = "email@naver.com")
+    @NotEmpty
     private String email;
 
     @Schema(description = "비밀번호", example = "password1234")

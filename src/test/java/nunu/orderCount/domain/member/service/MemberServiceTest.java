@@ -6,6 +6,7 @@ import nunu.orderCount.domain.member.exception.LoginFailException;
 import nunu.orderCount.domain.member.exception.NotExistMemberException;
 import nunu.orderCount.domain.member.exception.ZigzagLoginFailException;
 import nunu.orderCount.domain.member.model.Member;
+import nunu.orderCount.domain.member.model.MemberInfo;
 import nunu.orderCount.domain.member.model.Role;
 import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
 import nunu.orderCount.domain.member.model.dto.request.RequestLoginDto;
@@ -16,6 +17,7 @@ import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.model.dto.response.ResponseRefreshZigzagToken;
 import nunu.orderCount.domain.member.model.dto.response.ResponseReissueDto;
 import nunu.orderCount.domain.member.repository.MemberRepository;
+import nunu.orderCount.global.config.RedisTestContainers;
 import nunu.orderCount.global.config.jwt.JwtProvider;
 import nunu.orderCount.global.config.jwt.JwtToken;
 import nunu.orderCount.global.util.RedisUtil;
@@ -41,7 +43,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @Slf4j
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, RedisTestContainers.class})
 class MemberServiceTest {
 
     @Mock
@@ -280,6 +282,20 @@ class MemberServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("회원 정보 생성")
+    void createMemberInfo(){
+        //given
+        Member testMember = createTestMember(email, password, 1L);
+
+        doReturn(Optional.of(testMember)).when(memberRepository).findById(anyLong());
+        doReturn("update" + zigzagToken).when(redisUtil).getData(anyString());
+
+        MemberInfo memberInfo = memberService.createMemberInfo(1L);
+
+        assertThat(memberInfo.getMember().getMemberId()).isEqualTo(1L);
+    }
+
     private Member createTestMember(String email, String password, Long memberId){
         Member testMember = Member.builder()
                 .email(email)
@@ -294,6 +310,5 @@ class MemberServiceTest {
         );
         return testMember;
     }
-
 
 }

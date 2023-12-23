@@ -64,6 +64,45 @@ class ProductRepositoryTest {
         assertThat(product.get().getZigzagProductId()).isEqualTo("zigzagProductId");
 
     }
+
+    @DisplayName("zigzag 상품 id, member 로 상품 존재 확인")
+    @Test
+    void findByZigzagProductIdAndMember() {
+        //given
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = Product.builder()
+                .imageUrl("url")
+                .name("name")
+                .zigzagProductId("zigzagProductId")
+                .member(testMember)
+                .build();
+        productRepository.save(testProduct);
+        Product product = productRepository.findByZigzagProductIdAndMember("zigzagProductId", testMember).get();
+
+        //when, then
+        assertThat(product.getZigzagProductId()).isEqualTo("zigzagProductId");
+    }
+
+    @DisplayName("zigzag 상품 번호, member 로 조회")
+    @Test
+    void existsByZigzagProductIdAndMember() {
+        //given
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = Product.builder()
+                .imageUrl("url")
+                .name("name")
+                .zigzagProductId("zigzagProductId")
+                .member(testMember)
+                .build();
+        productRepository.save(testProduct);
+
+        //when, then
+        assertThat(productRepository.existsByZigzagProductIdAndMember("zigzagProductId", testMember)).isTrue();
+        assertThat(productRepository.existsByZigzagProductIdAndMember("productId", testMember)).isFalse();
+    }
+
     private Member createTestMember(String email, String password){
         Member testMember = Member.builder()
                 .email(email)

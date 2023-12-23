@@ -33,11 +33,13 @@ public class ExceptionHandlerFilter extends OncePerRequestFilter {
     private void setErrorResponse(HttpServletResponse response, BusinessException e) {
         ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getMessage());
         log.error("error occurred in filter: {}", errorResponse.getTrackingId());
+        log.error("error message: {}", e.getMessage());
         writeResponse(response, errorResponse, e.getErrorCode().getStatus());
     }
     private void setUnexpectedErrorResponse(HttpServletResponse response, Exception e) {
         ErrorResponse errorResponse = new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
         log.error("unexpected error occurred in filter: {}", errorResponse.getTrackingId());
+        log.error("error message: {}", e.getMessage() + "\n" + response.toString());
         writeResponse(response, errorResponse, 500);
     }
     private void writeResponse(HttpServletResponse response, ErrorResponse errorResponse, int status) {

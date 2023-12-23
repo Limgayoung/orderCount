@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    //todo: BusinessException 찍지 말고 발생 class 받아서 명확하게 표시해줄 것
     @ExceptionHandler
     protected ResponseEntity<ErrorResponse> businessExceptionHandler(BusinessException e){
 //        log.info("error: {}", e.getErrorCode().getMessage());
-        log.error("businessException: {}", e.getMessage());
+        log.error("businessException: {}, {}", e.getErrorCode().getMessage(), e.getMessage());
         return ErrorResponse.of(e.getErrorCode(), e.getMessage());
     }
 

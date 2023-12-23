@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findTopByMemberOrderByDatePaidDesc(Member member);
 
+    Boolean existsByMemberAndOrderItemNumber(Member member, String orderItemNumber);
     List<Order> findByMemberAndIsDoneFalse(Member member);
 }

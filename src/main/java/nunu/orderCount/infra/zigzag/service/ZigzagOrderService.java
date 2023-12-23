@@ -34,8 +34,10 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         RequestZigzagOrderDto requestZigzagOrderDto = new RequestZigzagOrderDto(query, startDate, endDate);
         try {
             String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);
+            log.debug("response: {}", responseJson);
             return parseOrderList(responseJson);
         } catch (ZigzagRequestApiException e) {
+            log.info("zigzag exception occurred!");
             return null;
         }
     }
@@ -46,8 +48,17 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         try {
 
             JSONObject jsonObj = (JSONObject) parser.parse(json);
+
+            try {
+                JSONArray errorsList = (JSONArray) jsonObj.get("errors");
+                JSONObject error = (JSONObject) errorsList.get(0);
+                String message = (String) error.get("message");
+                throw new ZigzagParsingException(message);
+            } catch (Exception e) {}
+
             JSONObject data = (JSONObject) jsonObj.get("data");
             JSONObject partnerOrderItemList = (JSONObject) data.get("partner_order_item_list");
+//            int totalCount = (Integer) partnerOrderItemList.get("total_count");
             JSONArray itemList = (JSONArray) partnerOrderItemList.get("item_list");
 
             for(int i=0;i<itemList.size();i++){
@@ -61,8 +72,9 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                 long quantity = (long) orderInfo.get("quantity");
                 String orderItemNumber = (String) orderInfo.get("order_item_number");
                 String productId = (String) orderInfo.get("product_id");
-                long datePaid = (long) orderInfo.get("date_paid");
+                long datePaid = (long) orderInfo.get("date_created");
 
+                //todo: ResponseZigzagOrderDto datePaid -> dateCreated (지그재그 response 값이 변경됨)
                 ResponseZigzagOrderDto responseZigzagOrderDto = ResponseZigzagOrderDto.builder()
                         .orderNumber(orderNumber)
                         .orderItemNumber(orderItemNumber)
@@ -76,7 +88,7 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                 responseList.add(responseZigzagOrderDto);
             }
         } catch (ParseException e) {
-            throw new ZigzagParsingException("zigzag 에서 주문 정보를 받아올 수 없습니다.");
+            throw new ZigzagParsingException("zigzag 에서 받아온 주문 정보를 파싱할 수 없습니다.");
         }
         return responseList;
     }

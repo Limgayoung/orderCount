@@ -34,7 +34,7 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
         RequestZigzagOrderDto requestZigzagOrderDto = new RequestZigzagOrderDto(query, startDate, endDate);
         try {
             String responseJson = post(ORDER_REQUEST_URI, cookie, requestZigzagOrderDto, String.class);
-            log.info("response: {}", responseJson);
+            log.debug("response: {}", responseJson);
             return parseOrderList(responseJson);
         } catch (ZigzagRequestApiException e) {
             log.info("zigzag exception occurred!");
@@ -71,8 +71,9 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                 long quantity = (long) orderInfo.get("quantity");
                 String orderItemNumber = (String) orderInfo.get("order_item_number");
                 String productId = (String) orderInfo.get("product_id");
-                long datePaid = (long) orderInfo.get("date_paid");
+                long datePaid = (long) orderInfo.get("date_created");
 
+                //todo: ResponseZigzagOrderDto datePaid -> dateCreated (지그재그 response 값이 변경됨)
                 ResponseZigzagOrderDto responseZigzagOrderDto = ResponseZigzagOrderDto.builder()
                         .orderNumber(orderNumber)
                         .orderItemNumber(orderItemNumber)

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.global.common.BaseEntity;
-import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

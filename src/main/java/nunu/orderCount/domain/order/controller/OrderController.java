@@ -11,9 +11,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.MemberInfo;
-import nunu.orderCount.domain.member.model.dto.request.RequestJoinDto;
-import nunu.orderCount.domain.member.model.dto.response.ResponseJoinDto;
-import nunu.orderCount.domain.member.model.dto.response.ResponseLoginDto;
 import nunu.orderCount.domain.member.service.MemberService;
 import nunu.orderCount.domain.option.model.OptionDtoInfo;
 import nunu.orderCount.domain.option.model.dto.request.RequestCreateOptionsDto;
@@ -24,15 +21,12 @@ import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.service.OrderServiceImpl;
 import nunu.orderCount.domain.product.model.ProductDtoInfo;
 import nunu.orderCount.domain.product.model.dto.request.RequestUpdateProductDto;
-import nunu.orderCount.domain.product.service.ProductService;
 import nunu.orderCount.domain.product.service.ProductServiceImpl;
 import nunu.orderCount.global.error.ErrorResponse;
 import nunu.orderCount.global.response.Response;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 
 @Slf4j
 @Tag(name = "Order 관련 API")
@@ -46,6 +40,7 @@ public class OrderController {
     private final ProductServiceImpl productService;
     private final OptionService optionService;
 
+    //todo: swagger 위한 error 정리
     @Operation(summary = "주문 업데이트 API", description = "회원 id로 주문 업데이트 진행")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "S200", description = "주문 업데이트 성공"),

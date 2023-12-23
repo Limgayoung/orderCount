@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -92,7 +91,6 @@ public class ZigzagProductService extends ZigzagWebClientRequester{
             JSONObject jsonObj = (JSONObject) parser.parse(json);
             JSONObject data = (JSONObject) jsonObj.get("data");
             JSONObject cachedProductList = (JSONObject) data.get("cached_product_list");
-//            long totalCount = (long) catalogProductList.get("total_count");
             JSONArray productList = (JSONArray) cachedProductList.get("product_list");
 
             for(int i=0;i<productList.size();i++){

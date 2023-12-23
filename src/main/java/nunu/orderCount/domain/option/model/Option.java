@@ -26,14 +26,7 @@ public class Option {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Product product;
-
-    @Builder
-    public Option(String name, Integer inventoryQuantity, Product product) {
-        this.name = name;
-        this.inventoryQuantity = inventoryQuantity;
-        this.product = product;
-    }
-
+    
     @Builder
     public Option(String name, Product product) {
         this.name = name;

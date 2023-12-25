@@ -47,7 +47,6 @@ class OptionRepositoryTest {
 
     private Option createTestOption(Product product, String name) {
         return Option.builder()
-                .inventoryQuantity(0)
                 .product(product)
                 .name(name)
                 .build();

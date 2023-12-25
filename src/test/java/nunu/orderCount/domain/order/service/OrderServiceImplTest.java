@@ -1,6 +1,9 @@
 package nunu.orderCount.domain.order.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.MemberInfo;
@@ -23,10 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -58,7 +58,7 @@ class OrderServiceImplTest {
         @DisplayName("마지막 주문 정보 없을 경우")
         void notExistLastOrder(){
             MemberInfo memberInfo = createMemberInfo();
-            doReturn(Optional.empty()).when(orderRepository).findTopByMemberOrderByDatePaidDesc(any(Member.class));
+            doReturn(Optional.empty()).when(orderRepository).findTopByMemberOrderByOrderDateTimeDesc(any(Member.class));
             List<ResponseZigzagOrderDto> responseZigzagOrderDtos = createResponseZigzagOrderDto(5);
             doReturn(responseZigzagOrderDtos).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
 
@@ -73,9 +73,11 @@ class OrderServiceImplTest {
             MemberInfo memberInfo = createMemberInfo();
             Product testProduct = createTestProduct(memberInfo.getMember());
             Option testOption = createTestOption(testProduct);
-            Order testOrder = createTestOrder(20231205L, testOption);
+            LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
+
+            Order testOrder = createTestOrder(dateTime, testOption);
             doReturn(Optional.of(testOrder)).when(orderRepository)
-                    .findTopByMemberOrderByDatePaidDesc(any(Member.class));
+                    .findTopByMemberOrderByOrderDateTimeDesc(any(Member.class));
             List<ResponseZigzagOrderDto> responseZigzagOrderDtos = createResponseZigzagOrderDto(5);
             doReturn(responseZigzagOrderDtos).when(zigzagOrderService).zigzagOrderListRequester(anyString(), anyInt(), anyInt());
 
@@ -91,22 +93,33 @@ class OrderServiceImplTest {
         MemberInfo memberInfo = createMemberInfo();
         Product testProduct = createTestProduct(memberInfo.getMember());
         Option testOption = createTestOption(testProduct);
-        Order testOrder = createTestOrder(20231206L, testOption);
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
+
+        Order testOrder = createTestOrder(dateTime, testOption);
         doReturn(Optional.of(testProduct)).when(productRepository).findByZigzagProductIdAndMember(anyString(), any(Member.class));
         doReturn(false).when(orderRepository).existsByMemberAndOrderItemNumber(any(Member.class), anyString());
         doReturn(Optional.of(testOption)).when(optionRepository).findByProductAndName(any(Product.class), anyString());
         doReturn(List.of(testOrder)).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
         doReturn(List.of(1)).when(orderRepository).saveAll(anyList());
 
-        List<OrderDtoInfo> dto = createOrderDtoInfo(5, 20231205L);
+        List<OrderDtoInfo> dto = createOrderDtoInfo(5, dateTime);
 
         dto.add(new OrderDtoInfo(testOrder.getQuantity(), testOrder.getOrderItemNumber(), testOrder.getOrderNumber(),
-                testOrder.getDatePaid(), testProduct.getZigzagProductId(), testOption.getName()));
+                testOrder.getOrderDateTime(), testProduct.getZigzagProductId(), testOption.getName()));
         ResponseOrderUpdateDto response = orderService.orderUpdate(
                 new RequestOrderUpdateDto(memberInfo, dto));
 
         assertThat(response.getNewOrderCount()).isEqualTo(6);
         assertThat(response.getChangeStatusOrderCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("기간별 상품 조회")
+    void findByDate(){
+        log.info("현재 시각: {}", System.currentTimeMillis());
+        log.info("시간: {}",
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(1703155817585L), TimeZone.getDefault().toZoneId()));
+
     }
 
     private MemberInfo createMemberInfo(){
@@ -118,24 +131,24 @@ class OrderServiceImplTest {
         for(int i=1;i<=size;i++){
             responseZigzagOrders.add(
                     new ResponseZigzagOrderDto("product" + i, "option" + i, Long.valueOf(i), "itemNum" + i,
-                            "orderNum" + i, "" + i, Long.valueOf(i)));
+                            "orderNum" + i, "" + i, LocalDateTime.of(2023, 12, 20, 10, 10, i)));
         }
         return responseZigzagOrders;
     }
 
-    private List<OrderDtoInfo> createOrderDtoInfo(int size, Long date){
+    private List<OrderDtoInfo> createOrderDtoInfo(int size, LocalDateTime dateTime){
         List<OrderDtoInfo> orderDtoInfos = new ArrayList<>();
         String num ="";
         for(int i=1;i<=size;i++){
             num+=i;
-            orderDtoInfos.add(new OrderDtoInfo(Long.valueOf(i), num, num, date, num, "option" + i));
+            orderDtoInfos.add(new OrderDtoInfo(Long.valueOf(i), num, num, dateTime, num, "option" + i));
         }
         return orderDtoInfos;
     }
 
-    private Order createTestOrder(long datePaid, Option option){
+    private Order createTestOrder(LocalDateTime orderDateTime, Option option){
         return Order.builder()
-                .datePaid(datePaid)
+                .orderDateTime(orderDateTime)
                 .orderNumber("1")
                 .quantity(1L)
                 .orderItemNumber("1")
@@ -147,7 +160,6 @@ class OrderServiceImplTest {
         return Option.builder()
                 .product(product)
                 .name("option")
-                .inventoryQuantity(1)
                 .build();
     }
 
@@ -160,66 +172,4 @@ class OrderServiceImplTest {
                 .build();
     }
 
-    private Order createTestOrder(Long datePaid, Member member, Option option, Long orderId){
-        Order testOrder = Order.builder()
-                .orderItemNumber("1")
-                .datePaid(datePaid)
-                .orderNumber("1")
-                .member(member)
-                .option(option)
-                .quantity(2L)
-                .build();
-//        ReflectionTestUtils.setField(
-//                testOrder,
-//                "orderId",
-//                orderId,
-//                Long.class
-//        );
-        return testOrder;
-    }
-    private Member createTestMember(String email, String password, Long memberId){
-        Member testMember = Member.builder()
-                .email(email)
-                .password(password)
-                .build();
-
-        ReflectionTestUtils.setField(
-                testMember,
-                "memberId",
-                memberId,
-                Long.class
-        );
-        return testMember;
-    }
-    private Product createTestProduct(String name, String url, String zigzagProductId, Long productId, Member member){
-        Product testProduct = Product.builder()
-                .imageUrl(url)
-                .name(name)
-                .zigzagProductId(zigzagProductId)
-                .member(member)
-                .build();
-        ReflectionTestUtils.setField(
-                testProduct,
-                "productId",
-                productId,
-                Long.class
-        );
-        return testProduct;
-    }
-
-    private Option createTestOption(String name, Long quantity, Product product, Long optionId){
-        Option testOption = Option.builder()
-                .product(product)
-                .name("option")
-                .inventoryQuantity(2)
-                .build();
-
-        ReflectionTestUtils.setField(
-                testOption,
-                "optionId",
-                optionId,
-                Long.class
-        );
-        return testOption;
-    }
 }

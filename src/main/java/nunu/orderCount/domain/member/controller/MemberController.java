@@ -53,6 +53,8 @@ public class MemberController {
     @PostMapping("/login")
     public ResponseEntity<Response> login(@RequestBody @Valid RequestLoginDto dto) {
         ResponseLoginDto responseLoginDto = memberService.login(dto);
+        memberService.refreshZigzagToken(
+                new RequestRefreshZigzagTokenDto(responseLoginDto.getMemberId(), dto.getPassword()));
         return Response.SUCCESS("로그인을 성공했습니다.", responseLoginDto);
     }
 

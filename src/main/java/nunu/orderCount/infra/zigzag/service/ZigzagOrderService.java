@@ -1,5 +1,8 @@
 package nunu.orderCount.infra.zigzag.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.infra.zigzag.exception.ZigzagParsingException;
 import nunu.orderCount.infra.zigzag.exception.ZigzagRequestApiException;
@@ -74,14 +77,13 @@ public class ZigzagOrderService extends ZigzagWebClientRequester{
                 String productId = (String) orderInfo.get("product_id");
                 long datePaid = (long) orderInfo.get("date_created");
 
-                //todo: ResponseZigzagOrderDto datePaid -> dateCreated (지그재그 response 값이 변경됨)
                 ResponseZigzagOrderDto responseZigzagOrderDto = ResponseZigzagOrderDto.builder()
                         .orderNumber(orderNumber)
                         .orderItemNumber(orderItemNumber)
                         .option(productOptionName)
                         .productId(productId)
                         .productName(productName)
-                        .datePaid(datePaid)
+                        .orderDateTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(datePaid), TimeZone.getDefault().toZoneId()))
                         .quantity(quantity)
                         .build();
 

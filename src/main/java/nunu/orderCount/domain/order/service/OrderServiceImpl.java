@@ -8,7 +8,6 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
-import nunu.orderCount.domain.order.exception.ZigzagRequestFailException;
 import nunu.orderCount.domain.order.model.Order;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
@@ -16,11 +15,8 @@ import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.domain.product.repository.ProductRepository;
-import nunu.orderCount.global.util.RedisUtil;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
 import nunu.orderCount.infra.zigzag.service.ZigzagOrderService;
-import nunu.orderCount.infra.zigzag.service.ZigzagProductService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -36,7 +32,6 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final OptionRepository optionRepository;
     private final ZigzagOrderService zigzagOrderService;
@@ -48,7 +43,7 @@ public class OrderServiceImpl implements OrderService{
      */
     public List<ResponseZigzagOrderDto> getOrdersFromZigzag(MemberInfo memberInfo) {
         //zigzagOrderService 에서 order 정보 받아오기
-        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(memberInfo.getMember());
+        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByOrderDateTimeDesc(memberInfo.getMember());
         Integer startDate = calStartDate(latestOrder);
         Integer endDate = Integer.parseInt(String.valueOf(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         List<ResponseZigzagOrderDto> zigzagOrderList = zigzagOrderService.zigzagOrderListRequester(
@@ -96,7 +91,7 @@ public class OrderServiceImpl implements OrderService{
 
                     return Order.builder()
                             .option(option.get())
-                            .datePaid(orderDtoInfo.getDatePaid())
+                            .orderDateTime(orderDtoInfo.getOrderDateTime())
                             .member(memberInfo.getMember())
                             .orderNumber(orderDtoInfo.getOrderNumber())
                             .orderItemNumber(orderDtoInfo.getOrderItemNumber())
@@ -116,7 +111,7 @@ public class OrderServiceImpl implements OrderService{
     private Integer calStartDate(Optional<Order> latestOrder) {
         if(latestOrder.isPresent()) {
             log.info("last order is present");
-            return Integer.parseInt(String.valueOf(latestOrder.get().getDatePaid()));
+            return Integer.parseInt(latestOrder.get().getOrderDateTime().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         }
         else{
             log.info("last order is null");

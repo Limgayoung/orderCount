@@ -85,7 +85,7 @@ public class OrderController {
         List<OrderDtoInfo> orderDtoInfos = ordersFromZigzag.stream()
                 .map(o ->
                         new OrderDtoInfo(o.getQuantity(), o.getOrderItemNumber(), o.getOrderNumber(),
-                                o.getDatePaid(), o.getProductId(), o.getOption())
+                                o.getOrderDateTime(), o.getProductId(), o.getOption())
                 )
                 .distinct()
                 .collect(Collectors.toList());

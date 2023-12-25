@@ -1,5 +1,6 @@
 package nunu.orderCount.domain.order.repository;
 
+import java.time.LocalDateTime;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
@@ -45,13 +46,12 @@ class OrderRepositoryTest {
         Option testOption = Option.builder()
                 .product(testProduct)
                 .name("option")
-                .inventoryQuantity(2)
                 .build();
         optionRepository.save(testOption);
 
         Order testOrder = Order.builder()
                 .orderItemNumber("1")
-                .datePaid(20230812L)
+                .orderDateTime(LocalDateTime.of(2023,12,8,10,10,10))
                 .orderNumber("orderNumber")
                 .member(testMember)
                 .quantity(2L)
@@ -59,7 +59,7 @@ class OrderRepositoryTest {
                 .build();
         Order testOrder2 = Order.builder()
                 .orderItemNumber("2")
-                .datePaid(20230813L)
+                .orderDateTime(LocalDateTime.of(2023,12,8,10,10,10))
                 .orderNumber("orderNumber2")
                 .member(testMember)
                 .quantity(2L)
@@ -69,7 +69,7 @@ class OrderRepositoryTest {
         orderRepository.save(testOrder2);
 
         //when
-        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(testOrder.getMember());
+        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByOrderDateTimeDesc(testOrder.getMember());
 
         //then
         assertThat(latestOrder.get().getMember()).isEqualTo(testMember);
@@ -82,7 +82,7 @@ class OrderRepositoryTest {
         Member testMember = createTestMember("email", "password");
         memberRepository.save(testMember);
         //when
-        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByDatePaidDesc(testMember);
+        Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByOrderDateTimeDesc(testMember);
 
         //then
         assertThat(latestOrder).isEqualTo(Optional.empty());

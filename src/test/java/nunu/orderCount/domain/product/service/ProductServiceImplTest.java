@@ -3,6 +3,7 @@ package nunu.orderCount.domain.product.service;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ class ProductServiceImplTest {
     @DisplayName("모든 데이터 새로 저장하는 경우")
     void updateProduct() {
         RequestUpdateProductDto requestUpdateProductDto = makeUpdateProductDto();
-        doReturn(false).when(productRepository).existsByZigzagProductId(anyString());
+        lenient().doReturn(false).when(productRepository).existsByZigzagProductId(anyString());
         doReturn(Map.of("product1", "url1", "product2", "url2")).when(zigzagProductService)
                 .ZigzagProductImagesUrlRequester(anyString(), anyList());
         doReturn(List.of("1")).when(productRepository).saveAll(anyList());

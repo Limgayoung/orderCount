@@ -1,5 +1,6 @@
 package nunu.orderCount.domain.order.model;
 
+import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class OrderDtoInfo {
     @NotNull
     private String orderNumber; //주문 번호
     @NotNull
-    private Long datePaid; //결제 일자
+    private LocalDateTime orderDateTime; //주문 일자
     @NotNull
     private String productId;
     @NotNull

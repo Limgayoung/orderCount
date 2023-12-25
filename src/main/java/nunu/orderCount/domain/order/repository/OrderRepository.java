@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    Optional<Order> findTopByMemberOrderByDatePaidDesc(Member member);
+    Optional<Order> findTopByMemberOrderByOrderDateTimeDesc(Member member);
 
     Boolean existsByMemberAndOrderItemNumber(Member member, String orderItemNumber);
     List<Order> findByMemberAndIsDoneFalse(Member member);

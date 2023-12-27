@@ -28,7 +28,6 @@ public class Order extends BaseEntity {
     private String orderItemNumber; //상품 주문 번호
     @NotNull
     private String orderNumber; //주문 번호
-    //todo: LocalDateTime으로 변경할 것
     @NotNull
     private LocalDateTime orderDateTime; //주문 일자
     @NotNull

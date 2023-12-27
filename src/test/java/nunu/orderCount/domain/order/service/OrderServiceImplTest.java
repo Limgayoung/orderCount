@@ -11,8 +11,11 @@ import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.model.Order;
+import nunu.orderCount.domain.order.model.OrderCountByOption;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
@@ -28,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.security.core.parameters.P;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -114,12 +118,25 @@ class OrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("기간별 상품 조회")
-    void findByDate(){
-        log.info("현재 시각: {}", System.currentTimeMillis());
-        log.info("시간: {}",
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(1703155817585L), TimeZone.getDefault().toZoneId()));
+    @DisplayName("전체 배송준비중 주문 조회")
+    void findOrders(){
+        Member testMember = new Member("email", "password");
+        Product testProduct = createTestProduct(testMember);
+        Option testOption = createTestOption(testProduct);
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
 
+        Order testOrder = createTestOrder(dateTime, testOption);
+
+        List<OrderCountByOption> orderCountByOptions = new ArrayList<>();
+        orderCountByOptions.add(createOrderCountByOption(testOrder, testOption, 2L));
+        orderCountByOptions.add(createOrderCountByOption(testOrder, testOption, 3L));
+
+        doReturn(orderCountByOptions).when(orderRepository).sumIsDoneFalseOrdersByOption(any(Member.class));
+        doReturn(testOrder).when(orderRepository)
+                .findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTime(any(Member.class), any(Option.class));
+
+        ResponseFindOrdersDto responseFindOrdersDto = orderService.findOrders(new RequestFindOrdersDto(testMember));
+        assertThat(responseFindOrdersDto.getTotalOrderCount()).isEqualTo(5L);
     }
 
     private MemberInfo createMemberInfo(){
@@ -170,6 +187,10 @@ class OrderServiceImplTest {
                 .name("product")
                 .imageUrl("")
                 .build();
+    }
+
+    private OrderCountByOption createOrderCountByOption(Order order, Option option, Long count) {
+        return new OrderCountByOption(order, option, count);
     }
 
 }

@@ -1,11 +1,13 @@
 package nunu.orderCount.domain.order.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.model.Order;
+import nunu.orderCount.domain.order.model.OrderCountByOption;
 import nunu.orderCount.domain.product.model.Product;
 import nunu.orderCount.domain.product.repository.ProductRepository;
 import org.assertj.core.api.Assertions;
@@ -88,6 +90,23 @@ class OrderRepositoryTest {
         assertThat(latestOrder).isEqualTo(Optional.empty());
     }
 
+    @DisplayName("option 별 order quantity 집계")
+    @Test
+    void sumIsDoneFalseOrdersByOption(){
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = createTestProduct("product", "url", "111", testMember);
+        Option option1 = createTestOption(testProduct, "option1");
+        Option option2 = createTestOption(testProduct, "option2");
+        Order testOrder = createTestOrder(option1, testMember, "11", "11");
+        orderRepository.save(testOrder);
+        Order testOrder2 = createTestOrder(option2, testMember, "12", "12");
+        orderRepository.save(testOrder2);
+        List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOption(testMember);
+
+        assertThat(orderCountByOptions.size()).isEqualTo(2);
+    }
+
     private Member createTestMember(String email, String password){
         Member testMember = Member.builder()
                 .email(email)
@@ -104,5 +123,23 @@ class OrderRepositoryTest {
                 .member(member)
                 .build();
         return testProduct;
+    }
+
+    private Option createTestOption(Product product, String name){
+        return Option.builder()
+                .product(product)
+                .name(name)
+                .build();
+    }
+
+    private Order createTestOrder(Option option, Member member, String orderNumber, String orderItemNumber){
+        return Order.builder()
+                .option(option)
+                .orderDateTime(LocalDateTime.of(2023, 12, 12, 12, 12, 12))
+                .orderNumber(orderNumber)
+                .orderItemNumber(orderItemNumber)
+                .quantity(2L)
+                .member(member)
+                .build();
     }
 }

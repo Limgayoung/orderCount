@@ -98,13 +98,37 @@ class OrderRepositoryTest {
         Product testProduct = createTestProduct("product", "url", "111", testMember);
         Option option1 = createTestOption(testProduct, "option1");
         Option option2 = createTestOption(testProduct, "option2");
-        Order testOrder = createTestOrder(option1, testMember, "11", "11");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 12, 12, 12, 12);
+        Order testOrder = createTestOrder(option1, testMember, "11", "11",dateTime);
         orderRepository.save(testOrder);
-        Order testOrder2 = createTestOrder(option2, testMember, "12", "12");
+        Order testOrder2 = createTestOrder(option2, testMember, "12", "12",dateTime);
         orderRepository.save(testOrder2);
         List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOption(testMember);
 
         assertThat(orderCountByOptions.size()).isEqualTo(2);
+    }
+
+    @DisplayName("가장 오래된 주문 찾기")
+    @Test
+    void findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTimeDesc(){
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = createTestProduct("product", "url", "111", testMember);
+        Option option1 = createTestOption(testProduct, "option1");
+        Option option2 = createTestOption(testProduct, "option2");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 12, 12, 12, 12);
+        LocalDateTime dateTime2 = LocalDateTime.of(2023, 12, 13, 12, 12, 12);
+        Order testOrder = createTestOrder(option1, testMember, "11", "11",dateTime);
+        orderRepository.save(testOrder);
+        Order testOrder2 = createTestOrder(option2, testMember, "12", "12",dateTime);
+        orderRepository.save(testOrder2);
+        Order testOrder3 = createTestOrder(option2, testMember, "123", "123",dateTime2);
+        orderRepository.save(testOrder3);
+
+
+        Order result = orderRepository.findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTime(
+                testMember, option2);
+        assertThat(result.getOrderDateTime()).isEqualTo(dateTime);
     }
 
     private Member createTestMember(String email, String password){
@@ -132,10 +156,10 @@ class OrderRepositoryTest {
                 .build();
     }
 
-    private Order createTestOrder(Option option, Member member, String orderNumber, String orderItemNumber){
+    private Order createTestOrder(Option option, Member member, String orderNumber, String orderItemNumber, LocalDateTime dateTime){
         return Order.builder()
                 .option(option)
-                .orderDateTime(LocalDateTime.of(2023, 12, 12, 12, 12, 12))
+                .orderDateTime(dateTime)
                 .orderNumber(orderNumber)
                 .orderItemNumber(orderItemNumber)
                 .quantity(2L)

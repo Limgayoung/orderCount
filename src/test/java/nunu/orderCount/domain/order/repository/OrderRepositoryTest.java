@@ -1,5 +1,6 @@
 package nunu.orderCount.domain.order.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import nunu.orderCount.domain.member.model.Member;
@@ -90,24 +91,6 @@ class OrderRepositoryTest {
         assertThat(latestOrder).isEqualTo(Optional.empty());
     }
 
-    @DisplayName("option 별 order quantity 집계")
-    @Test
-    void sumIsDoneFalseOrdersByOption(){
-        Member testMember = createTestMember("email", "password");
-        memberRepository.save(testMember);
-        Product testProduct = createTestProduct("product", "url", "111", testMember);
-        Option option1 = createTestOption(testProduct, "option1");
-        Option option2 = createTestOption(testProduct, "option2");
-        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 12, 12, 12, 12);
-        Order testOrder = createTestOrder(option1, testMember, "11", "11",dateTime);
-        orderRepository.save(testOrder);
-        Order testOrder2 = createTestOrder(option2, testMember, "12", "12",dateTime);
-        orderRepository.save(testOrder2);
-        List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOption(testMember);
-
-        assertThat(orderCountByOptions.size()).isEqualTo(2);
-    }
-
     @DisplayName("가장 오래된 주문 찾기")
     @Test
     void findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTimeDesc(){
@@ -129,6 +112,62 @@ class OrderRepositoryTest {
         Order result = orderRepository.findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTime(
                 testMember, option2);
         assertThat(result.getOrderDateTime()).isEqualTo(dateTime);
+    }
+
+    @DisplayName("option 별 order quantity 집계")
+    @Test
+    void sumIsDoneFalseOrdersByOption(){
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = createTestProduct("product", "url", "111", testMember);
+        Option option1 = createTestOption(testProduct, "option1");
+        Option option2 = createTestOption(testProduct, "option2");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 12, 12, 12, 12);
+        Order testOrder = createTestOrder(option1, testMember, "11", "11",dateTime);
+        orderRepository.save(testOrder);
+        Order testOrder2 = createTestOrder(option2, testMember, "12", "12",dateTime);
+        orderRepository.save(testOrder2);
+        List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOption(testMember);
+
+        assertThat(orderCountByOptions.size()).isEqualTo(2);
+    }
+
+    @DisplayName("특정 기간 order Quantity 집계")
+    @Test
+    void sumIsDoneFalseOrdersByOptionBetweenDate(){
+        Member testMember = createTestMember("email", "password");
+        memberRepository.save(testMember);
+        Product testProduct = createTestProduct("product", "url", "111", testMember);
+        Option option1 = createTestOption(testProduct, "option1");
+        Option option2 = createTestOption(testProduct, "option2");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 12, 12, 12, 12);
+        Order testOrder = createTestOrder(option1, testMember, "11", "11",dateTime);
+        orderRepository.save(testOrder);
+        Order testOrder2 = createTestOrder(option2, testMember, "12", "12",dateTime);
+        orderRepository.save(testOrder2);
+        Order testOrder3 = createTestOrder(option1, testMember, "12", "15",dateTime);
+        orderRepository.save(testOrder3);
+
+        List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOptionBetweenDate(
+                testMember, LocalDateTime.of(2023, 12, 11,0,0,0),
+                LocalDateTime.of(2023, 12, 15,23,59,59));
+        assertThat(orderCountByOptions.size()).isEqualTo(2);
+
+        orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOptionBetweenDate(
+                testMember, LocalDateTime.of(2023, 12, 12,0,0,0),
+                LocalDateTime.of(2023, 12, 15,23,59,59));
+        assertThat(orderCountByOptions.size()).isEqualTo(2);
+
+        orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOptionBetweenDate(
+                testMember, LocalDateTime.of(2023, 12, 13,0,0,0),
+                LocalDateTime.of(2023, 12, 15,23,59,59));
+        assertThat(orderCountByOptions.size()).isEqualTo(0);
+
+        orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOptionBetweenDate(
+                testMember, LocalDateTime.of(2023, 12, 16,0,0,0),
+                LocalDateTime.of(2023, 12, 17,23,59,59));
+        assertThat(orderCountByOptions.size()).isEqualTo(0);
+
     }
 
     private Member createTestMember(String email, String password){

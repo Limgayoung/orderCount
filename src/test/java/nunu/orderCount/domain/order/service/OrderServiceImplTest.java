@@ -128,8 +128,8 @@ class OrderServiceImplTest {
         Order testOrder = createTestOrder(dateTime, testOption);
 
         List<OrderCountByOption> orderCountByOptions = new ArrayList<>();
-        orderCountByOptions.add(createOrderCountByOption(testOrder, testOption, 2L));
-        orderCountByOptions.add(createOrderCountByOption(testOrder, testOption, 3L));
+        orderCountByOptions.add(createOrderCountByOption(testOption, 2L));
+        orderCountByOptions.add(createOrderCountByOption(testOption, 3L));
 
         doReturn(orderCountByOptions).when(orderRepository).sumIsDoneFalseOrdersByOption(any(Member.class));
         doReturn(testOrder).when(orderRepository)
@@ -189,8 +189,8 @@ class OrderServiceImplTest {
                 .build();
     }
 
-    private OrderCountByOption createOrderCountByOption(Order order, Option option, Long count) {
-        return new OrderCountByOption(order, option, count);
+    private OrderCountByOption createOrderCountByOption(Option option, Long count) {
+        return new OrderCountByOption(option, count);
     }
 
 }

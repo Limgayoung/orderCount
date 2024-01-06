@@ -1,6 +1,6 @@
 package nunu.orderCount.domain.order.repository;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.order.model.Order;
@@ -18,9 +18,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByMemberAndIsDoneFalse(Member member);
 
     @Query(value = "select "
-            + "new nunu.orderCount.domain.order.model.OrderCountByOption(o, o.option, sum(o.quantity))"
-            + "from Order o where o.member = :member group by o.option")
+            + "new nunu.orderCount.domain.order.model.OrderCountByOption(o.option, sum(o.quantity))"
+            + "from Order o where o.member = :member and o.isDone = false group by o.option")
     List<OrderCountByOption> sumIsDoneFalseOrdersByOption(@Param("member") Member member);
+
+    @Query(value = "select "
+            + "new nunu.orderCount.domain.order.model.OrderCountByOption(o.option, sum(o.quantity))"
+            + "from Order o "
+            + "where o.member = :member and o.isDone = false and o.orderDateTime >= :startDate and o.orderDateTime <= :endDate "
+            + "group by o.option")
+    List<OrderCountByOption> sumIsDoneFalseOrdersByOptionBetweenDate(@Param("member") Member member,
+                                                                     @Param("startDate") LocalDateTime startDate,
+                                                                     @Param("endDate") LocalDateTime endDate);
 
     Order findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTime(Member member, Option option);
 }

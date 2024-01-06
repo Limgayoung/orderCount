@@ -2,6 +2,7 @@ package nunu.orderCount.domain.member.model;
 
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import nunu.orderCount.global.common.BaseEntity;
@@ -14,6 +15,7 @@ import java.util.Objects;
 @Entity
 @Getter
 @Table(name = "member")
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
     @Id
@@ -39,23 +41,4 @@ public class Member extends BaseEntity {
         this.role = Role.OWNER;
     }
     //todo: role 관련해서 수정할 것.
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Member member = (Member) o;
-
-        if (!memberId.equals(member.memberId)) return false;
-        return email.equals(member.email);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = memberId.hashCode();
-        result = 31 * result + email.hashCode();
-        return result;
-    }
 }

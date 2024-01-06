@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,14 @@ import nunu.orderCount.domain.member.service.MemberService;
 import nunu.orderCount.domain.option.model.OptionDtoInfo;
 import nunu.orderCount.domain.option.model.dto.request.RequestCreateOptionsDto;
 import nunu.orderCount.domain.option.service.OptionService;
+import nunu.orderCount.domain.order.model.OptionOrderInfo;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
+import nunu.orderCount.domain.order.model.OrderInfo;
+import nunu.orderCount.domain.order.model.ProductOptionOrderInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByOptionGroupAndDateDto;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersByOptionDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.service.OrderServiceImpl;
 import nunu.orderCount.domain.product.model.ProductDtoInfo;
@@ -25,6 +32,7 @@ import nunu.orderCount.domain.product.service.ProductServiceImpl;
 import nunu.orderCount.global.error.ErrorResponse;
 import nunu.orderCount.global.response.Response;
 import nunu.orderCount.infra.zigzag.model.dto.response.ResponseZigzagOrderDto;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +65,34 @@ public class OrderController {
         updateOption(ordersFromZigzag, memberInfo);
         ResponseOrderUpdateDto response = updateOrder(ordersFromZigzag, memberInfo);
         return Response.SUCCESS("주문 업데이트가 완료되었습니다.", response);
+    }
+
+    @Operation(summary = "전체 배송준비중 주문 옵션별 조회 API", description = "회원 id로 조회")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "S200", description = "주문 조회 성공"),
+            @ApiResponse(responseCode = "200(ResponseFindOrdersByOptionDto)", description = "ResponseFindOrdersByOptionDto data", content = @Content(schema = @Schema(implementation = ResponseFindOrdersByOptionDto.class)))
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<Response> findTotalOrders(@PathVariable("id") Long id) {
+        MemberInfo memberInfo = memberService.createMemberInfo(id);
+        ResponseFindOrdersByOptionDto response = orderService.findOrdersByOptionGroup(
+                new RequestFindOrdersDto(memberInfo.getMember()));
+        return Response.SUCCESS("주문 조회가 완료되었습니다.", response);
+    }
+
+    @Operation(summary = "기간별 배송준비중 주문 옵션별 조회 API", description = "회원 id, start/end date로 조회")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "S200", description = "주문 조회 성공"),
+            @ApiResponse(responseCode = "200(ResponseFindOrdersByOptionDto)", description = "ResponseFindOrdersByOptionDto data", content = @Content(schema = @Schema(implementation = ResponseFindOrdersByOptionDto.class)))
+    })
+    @GetMapping("/{id}/period")
+    public ResponseEntity<Response> findPeriodOrders(@PathVariable("id") Long id,
+                                                     @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam("startDate")LocalDate startDate,
+                                                     @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam("endDate")LocalDate endDate) {
+        MemberInfo memberInfo = memberService.createMemberInfo(id);
+        ResponseFindOrdersByOptionDto response = orderService.findOrdersByOptionGroupAndDate(
+                new RequestFindOrdersByOptionGroupAndDateDto(memberInfo.getMember(), startDate, endDate));
+        return Response.SUCCESS("주문 조회가 완료되었습니다.", response);
     }
 
     private void updateProduct(List<ResponseZigzagOrderDto> ordersFromZigzag, MemberInfo memberInfo){

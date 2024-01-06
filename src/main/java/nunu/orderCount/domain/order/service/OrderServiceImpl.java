@@ -1,5 +1,6 @@
 package nunu.orderCount.domain.order.service;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
@@ -11,7 +12,7 @@ import nunu.orderCount.domain.order.model.Order;
 import nunu.orderCount.domain.order.model.OptionOrderInfo;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
 import nunu.orderCount.domain.order.model.OrderInfo;
-import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByDateDto;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByOptionGroupAndDateDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersByOptionDto;
@@ -96,7 +97,7 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    public ResponseFindOrdersByOptionDto findOrdersByDate(RequestFindOrdersByDateDto dto) {
+    public ResponseFindOrdersByOptionDto findOrdersByOptionGroupAndDate(RequestFindOrdersByOptionGroupAndDateDto dto) {
         return null;
     }
 
@@ -152,12 +153,20 @@ public class OrderServiceImpl implements OrderService{
                                         .productName(order.getOption().getProduct().getName())
                                         .productImageUrl(order.getOption().getProduct().getImageUrl())
                                         .inventoryQuantity(order.getOption().getInventoryQuantity())
+                                        .orderDateTime(order.getOrderDateTime())
                                         .build();
                             })
                             .collect(Collectors.toList());
 
-                    return new OptionOrderInfo(optionListEntry.getKey(), orderInfos.size(), orderInfos);
+                    LocalDateTime latestOrderDateTime = findLatestOrderDateTime(orderInfos);
+                    return new OptionOrderInfo(optionListEntry.getKey(), orderInfos.size(), latestOrderDateTime, orderInfos);
                 })
                 .collect(Collectors.toList());
+    }
+
+    LocalDateTime findLatestOrderDateTime(List<OrderInfo> orderInfos) {
+        return orderInfos.stream().sorted(Comparator.comparing(OrderInfo::getOrderDateTime))
+                .map(OrderInfo::getOrderDateTime)
+                .findFirst().get();
     }
 }

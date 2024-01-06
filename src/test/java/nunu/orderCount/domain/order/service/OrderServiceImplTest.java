@@ -134,6 +134,7 @@ class OrderServiceImplTest {
         assertThat(responseFindOrdersByOptionDto.getTotalOrderCount()).isEqualTo(3L);
         assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().size()).isEqualTo(3L);
         assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().get(0).getOrderInfos().size()).isEqualTo(1L);
+        assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().get(0).getLatestOrderDateTime()).isEqualTo(dateTime);
     }
 
     private MemberInfo createMemberInfo(){

@@ -132,11 +132,10 @@ class OrderServiceImplTest {
 
         doReturn(orders).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
 
-        ResponseFindOrdersByOptionDto responseFindOrdersByOptionDto = orderService.findOrdersByOptionGroup(new RequestFindOrdersDto(testMember));
-        assertThat(responseFindOrdersByOptionDto.getTotalOrderCount()).isEqualTo(3L);
-        assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().size()).isEqualTo(3L);
-        assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().get(0).getOrderInfos().size()).isEqualTo(1L);
-        assertThat(responseFindOrdersByOptionDto.getOptionOrderInfos().get(0).getOldestOrderDateTime()).isEqualTo(dateTime);
+        ResponseFindOrdersByOptionDto response = orderService.findOrdersByOptionGroup(new RequestFindOrdersDto(testMember));
+        assertThat(response.getOptionCount()).isEqualTo(3L);
+        assertThat(response.getProductOptionOrderInfos().size()).isEqualTo(1L);
+        assertThat(response.getProductOptionOrderInfos().get(0).getOptionOrderInfos().size()).isEqualTo(3L);
     }
 
     @Test
@@ -168,9 +167,8 @@ class OrderServiceImplTest {
                 new RequestFindOrdersByOptionGroupAndDateDto(testMember, LocalDate.of(2023, 12, 11),
                         LocalDate.of(2023, 12, 12)));
 
-        assertThat(response.getTotalOrderCount()).isEqualTo(3);
-        //todo: getOptionOrderInfos.에서 latestOrderDateTime -> oldestOrderDateTime 으로 수정
-        log.info("oldest order dateTime: {}", response.getOptionOrderInfos().get(0).getOption().getName());
+        assertThat(response.getOptionCount()).isEqualTo(3);
+//        log.info("oldest order dateTime: {}", response.getOptionOrderInfos().get(0).getOption().getName());
         //어떤 option이 맨 앞에 올지 모름, 확인할 때에만 사용할 것
 //        assertThat(response.getOptionOrderInfos().get(0).getOldestOrderDateTime()).isEqualTo(dateTime);
 //        assertThat(response.getOptionOrderInfos().get(0).getCount()).isEqualTo(5);

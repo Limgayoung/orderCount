@@ -1,6 +1,7 @@
 package nunu.orderCount.domain.order.service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
@@ -98,7 +99,17 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public ResponseFindOrdersByOptionDto findOrdersByOptionGroupAndDate(RequestFindOrdersByOptionGroupAndDateDto dto) {
-        return null;
+        List<Order> orders = orderRepository.findByMemberAndIsDoneFalseAndOrderDateTimeBetween(
+                dto.getMember(),
+                dto.getStartDate().atStartOfDay(),
+                dto.getEndDate().atTime(LocalTime.MAX));
+
+        Map<Option, List<Order>> ordersByOption = orders.stream()
+                .collect(Collectors.groupingBy(Order::getOption));
+
+        List<OptionOrderInfo> optionOrderInfos = createOptionOrderInfos(ordersByOption);
+
+        return new ResponseFindOrdersByOptionDto(optionOrderInfos.size(), optionOrderInfos);
     }
 
     private List<Order> makeOrderList(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
@@ -133,11 +144,11 @@ public class OrderServiceImpl implements OrderService{
 
     private Integer calStartDate(Optional<Order> latestOrder) {
         if(latestOrder.isPresent()) {
-            log.info("last order is present");
+            //log.info("last order is present");
             return Integer.parseInt(latestOrder.get().getOrderDateTime().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         }
         else{
-            log.info("last order is null");
+            //log.info("last order is null");
             return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(1L).format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         }
     }
@@ -164,7 +175,7 @@ public class OrderServiceImpl implements OrderService{
                 .collect(Collectors.toList());
     }
 
-    LocalDateTime findLatestOrderDateTime(List<OrderInfo> orderInfos) {
+    private LocalDateTime findLatestOrderDateTime(List<OrderInfo> orderInfos) {
         return orderInfos.stream().sorted(Comparator.comparing(OrderInfo::getOrderDateTime))
                 .map(OrderInfo::getOrderDateTime)
                 .findFirst().get();

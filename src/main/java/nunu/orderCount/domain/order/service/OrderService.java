@@ -2,7 +2,7 @@ package nunu.orderCount.domain.order.service;
 
 import java.util.List;
 import nunu.orderCount.domain.member.model.MemberInfo;
-import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByDateDto;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByOptionGroupAndDateDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
@@ -19,7 +19,7 @@ public interface OrderService {
     // 주문 개수 조회 - 모든 배송준비중인 주문 조회
     public ResponseFindOrdersByOptionDto findOrdersByOptionGroup(RequestFindOrdersDto dto);
     //주문 개수 조회 - 특정 기간 배송준비중인 주문 조회
-    public ResponseFindOrdersByOptionDto findOrdersByDate(RequestFindOrdersByDateDto dto);
+    public ResponseFindOrdersByOptionDto findOrdersByOptionGroupAndDate(RequestFindOrdersByOptionGroupAndDateDto dto);
 
     // 주문 개수 조회 - 기간, 상품 (정렬 조건 (오래된 순, 상품 이름순, 등등))
 

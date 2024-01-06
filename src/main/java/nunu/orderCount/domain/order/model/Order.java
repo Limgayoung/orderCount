@@ -3,6 +3,7 @@ package nunu.orderCount.domain.order.model;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import nunu.orderCount.domain.member.model.Member;
@@ -16,6 +17,7 @@ import java.util.Objects;
 @Entity
 @Getter
 @Table(name = "orders")
+@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +30,6 @@ public class Order extends BaseEntity {
     private String orderItemNumber; //상품 주문 번호
     @NotNull
     private String orderNumber; //주문 번호
-    //todo: LocalDateTime으로 변경할 것
     @NotNull
     private LocalDateTime orderDateTime; //주문 일자
     @NotNull
@@ -59,35 +60,5 @@ public class Order extends BaseEntity {
 
     public void setOption(Option option) {
         this.option = option;
-    }
-
-        @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Order order = (Order) o;
-
-        if (!Objects.equals(orderId, order.orderId)) return false;
-        if (!Objects.equals(quantity, order.quantity)) return false;
-        if (!Objects.equals(orderItemNumber, order.orderItemNumber))
-            return false;
-        if (!Objects.equals(orderNumber, order.orderNumber)) return false;
-        if (!Objects.equals(orderDateTime, order.orderDateTime)) return false;
-        if (!Objects.equals(option, order.option)) return false;
-        return Objects.equals(member, order.member);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = orderId != null ? orderId.hashCode() : 0;
-//        int result = quantity != null ? quantity.hashCode() : 0;
-        result = 31 * result + (quantity != null ? quantity.hashCode() : 0);
-        result = 31 * result + (orderItemNumber != null ? orderItemNumber.hashCode() : 0);
-        result = 31 * result + (orderNumber != null ? orderNumber.hashCode() : 0);
-        result = 31 * result + (orderDateTime != null ? orderDateTime.hashCode() : 0);
-        result = 31 * result + (option != null ? option.hashCode() : 0);
-        result = 31 * result + (member != null ? member.hashCode() : 0);
-        return result;
     }
 }

@@ -1,9 +1,8 @@
 package nunu.orderCount.domain.order.service;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.MemberInfo;
@@ -12,7 +11,10 @@ import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.model.Order;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByOptionGroupAndDateDto;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersByOptionDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
@@ -72,7 +74,7 @@ class OrderServiceImplTest {
         void existLastOrder(){
             MemberInfo memberInfo = createMemberInfo();
             Product testProduct = createTestProduct(memberInfo.getMember());
-            Option testOption = createTestOption(testProduct);
+            Option testOption = createTestOption(testProduct, "option");
             LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
 
             Order testOrder = createTestOrder(dateTime, testOption);
@@ -92,7 +94,7 @@ class OrderServiceImplTest {
     void orderUpdate(){
         MemberInfo memberInfo = createMemberInfo();
         Product testProduct = createTestProduct(memberInfo.getMember());
-        Option testOption = createTestOption(testProduct);
+        Option testOption = createTestOption(testProduct, "option");
         LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
 
         Order testOrder = createTestOrder(dateTime, testOption);
@@ -114,11 +116,62 @@ class OrderServiceImplTest {
     }
 
     @Test
-    @DisplayName("기간별 상품 조회")
-    void findByDate(){
-        log.info("현재 시각: {}", System.currentTimeMillis());
-        log.info("시간: {}",
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(1703155817585L), TimeZone.getDefault().toZoneId()));
+    @DisplayName("전체 배송준비중 주문 조회")
+    void findOrders(){
+        Member testMember = new Member("email", "password");
+        Product testProduct = createTestProduct(testMember);
+        Option testOption1 = createTestOption(testProduct, "option1");
+        Option testOption2 = createTestOption(testProduct, "option2");
+        Option testOption3 = createTestOption(testProduct, "option3");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
+
+        List<Order> orders = new ArrayList<>();
+        orders.add(createTestOrder(dateTime, testOption1));
+        orders.add(createTestOrder(dateTime, testOption2));
+        orders.add(createTestOrder(dateTime, testOption3));
+
+        doReturn(orders).when(orderRepository).findByMemberAndIsDoneFalse(any(Member.class));
+
+        ResponseFindOrdersByOptionDto response = orderService.findOrdersByOptionGroup(new RequestFindOrdersDto(testMember));
+        assertThat(response.getOptionCount()).isEqualTo(3L);
+        assertThat(response.getProductOptionOrderInfos().size()).isEqualTo(1L);
+        assertThat(response.getProductOptionOrderInfos().get(0).getOptionOrderInfos().size()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("특정 기간 배송준비중 주문 조회")
+    void findOrdersByOptionGroupAndDate(){
+        Member testMember = new Member("email", "password");
+        Product testProduct = createTestProduct(testMember);
+        Option testOption1 = createTestOption(testProduct, "option1");
+        Option testOption2 = createTestOption(testProduct, "option2");
+        Option testOption3 = createTestOption(testProduct, "option3");
+        LocalDateTime dateTime = LocalDateTime.of(2023, 12, 8, 10, 10, 10);
+
+        List<Order> orders = new ArrayList<>();
+        orders.add(createTestOrder(dateTime, testOption1));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,12,0,0,0), testOption1));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,12,0,0,0), testOption2));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,12,0,0,0), testOption3));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,12,23,59,59), testOption1));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,12,23,59,59), testOption2));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,11,23,59,59), testOption2));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,11,23,59,59), testOption1));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,11,0,0,0), testOption1));
+        orders.add(createTestOrder(LocalDateTime.of(2023,12,13,0,0,0), testOption3));
+
+        doReturn(orders).when(orderRepository)
+                .findByMemberAndIsDoneFalseAndOrderDateTimeBetween(any(Member.class), any(), any());
+
+        ResponseFindOrdersByOptionDto response = orderService.findOrdersByOptionGroupAndDate(
+                new RequestFindOrdersByOptionGroupAndDateDto(testMember, LocalDate.of(2023, 12, 11),
+                        LocalDate.of(2023, 12, 12)));
+
+        assertThat(response.getOptionCount()).isEqualTo(3);
+//        log.info("oldest order dateTime: {}", response.getOptionOrderInfos().get(0).getOption().getName());
+        //어떤 option이 맨 앞에 올지 모름, 확인할 때에만 사용할 것
+//        assertThat(response.getOptionOrderInfos().get(0).getOldestOrderDateTime()).isEqualTo(dateTime);
+//        assertThat(response.getOptionOrderInfos().get(0).getCount()).isEqualTo(5);
 
     }
 
@@ -156,10 +209,10 @@ class OrderServiceImplTest {
                 .build();
     }
 
-    private Option createTestOption(Product product){
+    private Option createTestOption(Product product, String name){
         return Option.builder()
                 .product(product)
-                .name("option")
+                .name(name)
                 .build();
     }
 
@@ -171,5 +224,4 @@ class OrderServiceImplTest {
                 .imageUrl("")
                 .build();
     }
-
 }

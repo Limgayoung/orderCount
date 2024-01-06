@@ -25,7 +25,7 @@ class ZigzagOrderServiceTest {
     @Test
     void zigzagOrderListRequester() {
         List<ResponseZigzagOrderDto> responseZigzagOrders = zigzagOrderService.zigzagOrderListRequester(cookie,
-                20231220, 20231222);
+                20231220, 20240106);
 
         assertThat(responseZigzagOrders.size()).isGreaterThan(0);
     }

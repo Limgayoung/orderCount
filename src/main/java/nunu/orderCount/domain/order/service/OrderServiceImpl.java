@@ -1,16 +1,24 @@
 package nunu.orderCount.domain.order.service;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.MemberInfo;
-import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
 import nunu.orderCount.domain.order.model.Order;
+import nunu.orderCount.domain.order.model.OptionOrderInfo;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
+import nunu.orderCount.domain.order.model.OrderInfo;
+import nunu.orderCount.domain.order.model.ProductOptionOrderInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByOptionGroupAndDateDto;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersByOptionDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
@@ -41,6 +49,7 @@ public class OrderServiceImpl implements OrderService{
      *
      * @return zigzag order 정보 list
      */
+    @Override
     public List<ResponseZigzagOrderDto> getOrdersFromZigzag(MemberInfo memberInfo) {
         //zigzagOrderService 에서 order 정보 받아오기
         Optional<Order> latestOrder = orderRepository.findTopByMemberOrderByOrderDateTimeDesc(memberInfo.getMember());
@@ -78,6 +87,32 @@ public class OrderServiceImpl implements OrderService{
         return new ResponseOrderUpdateDto(newOrders.size(), doneOrders.size());
     }
 
+    @Override
+    public ResponseFindOrdersByOptionDto findOrdersByOptionGroup(RequestFindOrdersDto dto) {
+        List<Order> orders = orderRepository.findByMemberAndIsDoneFalse(dto.getMember());
+
+        Map<Option, List<Order>> ordersByOption = orders.stream()
+                .collect(Collectors.groupingBy(Order::getOption));
+
+        List<ProductOptionOrderInfo> productOptionOrderInfos = createProductOptionOrderInfos(ordersByOption);
+
+        return new ResponseFindOrdersByOptionDto(ordersByOption.size(), productOptionOrderInfos);
+    }
+
+    @Override
+    public ResponseFindOrdersByOptionDto findOrdersByOptionGroupAndDate(RequestFindOrdersByOptionGroupAndDateDto dto) {
+        List<Order> orders = orderRepository.findByMemberAndIsDoneFalseAndOrderDateTimeBetween(
+                dto.getMember(),
+                dto.getStartDate().atStartOfDay(),
+                dto.getEndDate().atTime(LocalTime.MAX));
+
+        Map<Option, List<Order>> ordersByOption = orders.stream()
+                .collect(Collectors.groupingBy(Order::getOption));
+        List<ProductOptionOrderInfo> productOptionOrderInfos = createProductOptionOrderInfos(ordersByOption);
+
+        return new ResponseFindOrdersByOptionDto(ordersByOption.size(), productOptionOrderInfos);
+    }
+
     private List<Order> makeOrderList(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
         return orderDtoInfos.stream()
                 .distinct()
@@ -110,12 +145,67 @@ public class OrderServiceImpl implements OrderService{
 
     private Integer calStartDate(Optional<Order> latestOrder) {
         if(latestOrder.isPresent()) {
-            log.info("last order is present");
+            //log.info("last order is present");
             return Integer.parseInt(latestOrder.get().getOrderDateTime().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
         }
         else{
-            log.info("last order is null");
+            //log.info("last order is null");
             return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(1L).format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         }
+    }
+
+    private List<ProductOptionOrderInfo> createProductOptionOrderInfos(Map<Option, List<Order>> ordersByOption) {
+        Map<Product, List<Entry<Option, List<Order>>>> productOptionInfos = ordersByOption.entrySet().stream()
+                .collect(Collectors.groupingBy(optionListEntry -> optionListEntry.getKey().getProduct()));
+
+        return productOptionInfos.entrySet().stream()
+                .map(productListEntry -> {
+                    Product product = productListEntry.getKey();
+                    List<Entry<Option, List<Order>>> optionListEntrys = productListEntry.getValue();
+                    List<OptionOrderInfo> optionOrderInfos = createOptionOrderInfos(optionListEntrys);
+
+                    return ProductOptionOrderInfo.builder()
+                            .productName(product.getName())
+                            .zigzagProductId(product.getZigzagProductId())
+                            .optionOrderInfos(optionOrderInfos)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<OptionOrderInfo> createOptionOrderInfos(List<Entry<Option, List<Order>>> optionListEntrys){
+        return optionListEntrys.stream()
+                .map(optionListEntry -> {
+                    List<OrderInfo> orderInfos = optionListEntry.getValue().stream()
+                            .map(order -> {
+                                return OrderInfo.builder()
+                                        .orderItemNumber(order.getOrderItemNumber())
+                                        .orderNumber(order.getOrderNumber())
+                                        .orderQuantity(order.getOrderId())
+                                        .orderDateTime(order.getOrderDateTime())
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+
+                    long orderCount = orderInfos.stream()
+                            .mapToLong(OrderInfo::getOrderQuantity)
+                            .count();
+                    LocalDateTime oldestOrderDateTime = findLatestOrderDateTime(orderInfos);
+                    Option option = optionListEntry.getKey();
+                    return OptionOrderInfo.builder()
+                            .optionName(option.getName())
+                            .oldestOrderDateTime(oldestOrderDateTime)
+                            .count(orderCount)
+                            .inventoryQuantity(option.getInventoryQuantity())
+                            .orderInfos(orderInfos)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private LocalDateTime findLatestOrderDateTime(List<OrderInfo> orderInfos) {
+        return orderInfos.stream().sorted(Comparator.comparing(OrderInfo::getOrderDateTime))
+                .map(OrderInfo::getOrderDateTime)
+                .findFirst().get();
     }
 }

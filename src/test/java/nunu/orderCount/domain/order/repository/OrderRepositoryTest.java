@@ -131,6 +131,11 @@ class OrderRepositoryTest {
         assertThat(optionOrderInfos.size()).isEqualTo(3);
 
         optionOrderInfos = orderRepository.findByMemberAndIsDoneFalseAndOrderDateTimeBetween(
+                testMember, LocalDateTime.of(2023, 12, 12,0,0,0),
+                LocalDateTime.of(2023, 12, 13,0,0,0));
+        assertThat(optionOrderInfos.size()).isEqualTo(2);
+
+        optionOrderInfos = orderRepository.findByMemberAndIsDoneFalseAndOrderDateTimeBetween(
                 testMember, LocalDateTime.of(2023, 12, 11,0,0,0),
                 LocalDateTime.of(2023, 12, 15,0,0,0));
         assertThat(optionOrderInfos.size()).isEqualTo(4);

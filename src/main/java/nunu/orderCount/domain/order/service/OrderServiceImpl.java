@@ -169,8 +169,8 @@ public class OrderServiceImpl implements OrderService{
                             })
                             .collect(Collectors.toList());
 
-                    LocalDateTime latestOrderDateTime = findLatestOrderDateTime(orderInfos);
-                    return new OptionOrderInfo(optionListEntry.getKey(), orderInfos.size(), latestOrderDateTime, orderInfos);
+                    LocalDateTime oldestOrderDateTime = findLatestOrderDateTime(orderInfos);
+                    return new OptionOrderInfo(optionListEntry.getKey(), orderInfos.size(), oldestOrderDateTime, orderInfos);
                 })
                 .collect(Collectors.toList());
     }

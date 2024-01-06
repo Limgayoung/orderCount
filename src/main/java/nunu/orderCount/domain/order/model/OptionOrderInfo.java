@@ -11,6 +11,6 @@ import nunu.orderCount.domain.option.model.Option;
 public class OptionOrderInfo {
     private final Option option;
     private final Integer count;
-    private final LocalDateTime latestOrderDateTime;
+    private final LocalDateTime oldestOrderDateTime;
     private final List<OrderInfo> orderInfos;
 }

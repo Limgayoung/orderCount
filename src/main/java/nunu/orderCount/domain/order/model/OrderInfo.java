@@ -22,17 +22,14 @@ public class OrderInfo {
     private final Long orderQuantity;
     @Schema(description = "재고 수량", example = "1")
     private final Integer inventoryQuantity;
-    @Schema(description = "가장 오래된 주문 dateTime", example = "2023-12-20 10:10:10")
-    private final LocalDateTime oldestOrderDateTime;
 
     @Builder
     public OrderInfo(String productName, String productImageUrl, String optionName, Long orderQuantity,
-                     Integer inventoryQuantity, LocalDateTime oldestOrderDateTime) {
+                     Integer inventoryQuantity) {
         this.productName = productName;
         this.productImageUrl = productImageUrl;
         this.optionName = optionName;
         this.orderQuantity = orderQuantity;
         this.inventoryQuantity = inventoryQuantity;
-        this.oldestOrderDateTime = oldestOrderDateTime;
     }
 }

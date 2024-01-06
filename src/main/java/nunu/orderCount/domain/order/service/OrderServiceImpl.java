@@ -4,17 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nunu.orderCount.domain.member.model.Member;
 import nunu.orderCount.domain.member.model.MemberInfo;
-import nunu.orderCount.domain.member.repository.MemberRepository;
 import nunu.orderCount.domain.option.model.Option;
 import nunu.orderCount.domain.option.repository.OptionRepository;
 import nunu.orderCount.domain.order.exception.InvalidZigzagTokenException;
 import nunu.orderCount.domain.order.model.Order;
-import nunu.orderCount.domain.order.model.OrderCountByOption;
+import nunu.orderCount.domain.order.model.OptionOrderInfo;
 import nunu.orderCount.domain.order.model.OrderDtoInfo;
 import nunu.orderCount.domain.order.model.OrderInfo;
+import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersByDateDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestFindOrdersDto;
 import nunu.orderCount.domain.order.model.dto.request.RequestOrderUpdateDto;
-import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersDto;
+import nunu.orderCount.domain.order.model.dto.response.ResponseFindOrdersByOptionDto;
 import nunu.orderCount.domain.order.model.dto.response.ResponseOrderUpdateDto;
 import nunu.orderCount.domain.order.repository.OrderRepository;
 import nunu.orderCount.domain.product.model.Product;
@@ -84,27 +84,20 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    public ResponseFindOrdersDto findOrders(RequestFindOrdersDto dto) {
-        //배송준비중인 order 찾기, option 별로 quantity count(sum)하기
-        List<OrderCountByOption> orderCountByOptions = orderRepository.sumIsDoneFalseOrdersByOption(dto.getMember());
-        List<OrderInfo> orderInfos = orderCountByOptions.stream()
-                .map(orderCountByOption -> {
-                    return OrderInfo.builder()
-                            .orderQuantity(orderCountByOption.getCount())
-                            .optionName(orderCountByOption.getOption().getName())
-                            .productName(orderCountByOption.getOption().getProduct().getName())
-                            .productImageUrl(orderCountByOption.getOption().getProduct().getImageUrl())
-                            .inventoryQuantity(orderCountByOption.getOption().getInventoryQuantity())
-                            .oldestOrderDateTime(
-                                    orderRepository.findTopByMemberAndOptionAndIsDoneIsFalseOrderByOrderDateTime(
-                                            dto.getMember(), orderCountByOption.getOption()).getOrderDateTime())
-                            .build();
-                })
-                .collect(Collectors.toList());
-        long count = orderCountByOptions.stream()
-                .mapToLong(OrderCountByOption::getCount)
-                .sum();
-        return new ResponseFindOrdersDto(count, orderInfos);
+    public ResponseFindOrdersByOptionDto findOrdersByOptionGroup(RequestFindOrdersDto dto) {
+        List<Order> orders = orderRepository.findByMemberAndIsDoneFalse(dto.getMember());
+
+        Map<Option, List<Order>> ordersByOption = orders.stream()
+                .collect(Collectors.groupingBy(Order::getOption));
+
+        List<OptionOrderInfo> optionOrderInfos = createOptionOrderInfos(ordersByOption);
+
+        return new ResponseFindOrdersByOptionDto(optionOrderInfos.size(), optionOrderInfos);
+    }
+
+    @Override
+    public ResponseFindOrdersByOptionDto findOrdersByDate(RequestFindOrdersByDateDto dto) {
+        return null;
     }
 
     private List<Order> makeOrderList(List<OrderDtoInfo> orderDtoInfos, MemberInfo memberInfo){
@@ -146,5 +139,25 @@ public class OrderServiceImpl implements OrderService{
             log.info("last order is null");
             return Integer.parseInt(String.valueOf(LocalDate.now().minusMonths(1L).format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         }
+    }
+
+    private List<OptionOrderInfo> createOptionOrderInfos(Map<Option, List<Order>> ordersByOption){
+        return ordersByOption.entrySet().stream()
+                .map(optionListEntry -> {
+                    List<OrderInfo> orderInfos = optionListEntry.getValue().stream()
+                            .map(order -> {
+                                return OrderInfo.builder()
+                                        .orderQuantity(order.getOrderId())
+                                        .optionName(order.getOption().getName())
+                                        .productName(order.getOption().getProduct().getName())
+                                        .productImageUrl(order.getOption().getProduct().getImageUrl())
+                                        .inventoryQuantity(order.getOption().getInventoryQuantity())
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+
+                    return new OptionOrderInfo(optionListEntry.getKey(), orderInfos.size(), orderInfos);
+                })
+                .collect(Collectors.toList());
     }
 }
